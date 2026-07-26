@@ -1,14 +1,10 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
-/// Wraps Firebase Cloud Messaging. The backend already stores a
-/// `device_push_token` column on the user and sends pushes from
-/// notifications/app_config broadcast tasks, but exposes no client-facing
-/// endpoint yet to *register* that token — so this service requests
-/// permission and listens for messages (foreground banners handled by the
-/// OS on Android/iOS, in-app snackbar hook available via [onForegroundMessage])
-/// without attempting a token upload. Wire up `onTokenRegister` once the
-/// backend adds that endpoint.
+/// Wraps Firebase Cloud Messaging. Requests permission, listens for
+/// messages, and surfaces the FCM token via [onTokenRegister] so the app
+/// can PATCH it to `/api/v1/auth/me/push-token` (see main.dart) — both on
+/// first launch and whenever FCM rotates the token.
 class PushService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   void Function(RemoteMessage message)? onForegroundMessage;

@@ -65,6 +65,9 @@ class _EazyDrAppState extends ConsumerState<EazyDrApp> {
     // Best-effort push init; harmless no-op if Firebase never initialized.
     Future.microtask(() async {
       try {
+        pushService.onTokenRegister = (token) {
+          ref.read(authProvider.notifier).registerPushToken(token);
+        };
         await pushService.init();
       } catch (_) {
         // push notifications unavailable on this build/device — ignore

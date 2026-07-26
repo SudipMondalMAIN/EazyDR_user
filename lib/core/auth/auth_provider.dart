@@ -97,6 +97,27 @@ class AuthNotifier extends Notifier<AuthState> {
     final storage = ref.read(localStorageProvider);
     await storage.saveTokens(access: tokenJson['access_token'], refresh: tokenJson['refresh_token']);
     await fetchCurrentUser();
+    await _registerPendingPushTokenIfAny();
+  }
+
+  String? _pendingPushToken;
+
+  /// Called by main.dart whenever FCM hands us a token. If the user isn't
+  /// logged in yet, we just remember it and send it right after login.
+  Future<void> registerPushToken(String token) async {
+    _pendingPushToken = token;
+    await _registerPendingPushTokenIfAny();
+  }
+
+  Future<void> _registerPendingPushTokenIfAny() async {
+    final token = _pendingPushToken;
+    if (token == null || state.status != SessionStatus.loggedIn) return;
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.patch('/api/v1/auth/me/push-token', data: {'device_push_token': token});
+    } catch (_) {
+      // best-effort — a missed push-token registration isn't fatal
+    }
   }
 
   Future<void> refreshCurrentUser() => fetchCurrentUser();
