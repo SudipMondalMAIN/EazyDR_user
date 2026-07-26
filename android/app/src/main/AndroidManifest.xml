@@ -1,8 +1,27 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Needed for the "near you" location detection (geolocator/geocoding)
+         used on the Home screen. Foreground/coarse location only — no
+         background location is used anywhere in the app. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+    <!-- Android 13+ requires this at runtime too; firebase_messaging's
+         requestPermission() call in push_service.dart triggers that prompt. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <application
         android:label="eazydr_user"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Default channel/icon FCM falls back to when a push payload
+             doesn't specify its own — avoids a missing-icon crash on
+             notification display. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="eazydr_default_channel" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
