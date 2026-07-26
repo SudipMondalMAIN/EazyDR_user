@@ -22,7 +22,8 @@ class BookingsRepository {
       'patient_phone': patientPhone,
       'patient_address': patientAddress,
       'appointment_date': appointmentDate,
-      'payment_mode': 'cash', // cash-only — online/Paytm is disabled pending gateway approval
+      'payment_mode':
+          'cash', // cash-only — online/Paytm is disabled pending gateway approval
     });
     return Booking.fromJson(res.data);
   }
@@ -30,16 +31,31 @@ class BookingsRepository {
   Future<List<Booking>> myBookings() async {
     final api = ref.read(apiClientProvider);
     final res = await api.get('/api/v1/bookings/my');
-    return (res.data as List).map((e) => Booking.fromJson(e as Map<String, dynamic>)).toList();
+    return (res.data as List)
+        .map((e) => Booking.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  Future<Map<String, dynamic>> cancel(String bookingId, {String? reason}) async {
+  Future<Booking> getReceipt(String bookingId) async {
     final api = ref.read(apiClientProvider);
-    final res = await api.post('/api/v1/bookings/$bookingId/cancel', data: {'reason': reason});
+    final res = await api.get('/api/v1/bookings/$bookingId/receipt');
+    return Booking.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<Map<String, dynamic>> cancel(String bookingId,
+      {String? reason}) async {
+    final api = ref.read(apiClientProvider);
+    final res = await api
+        .post('/api/v1/bookings/$bookingId/cancel', data: {'reason': reason});
     return res.data as Map<String, dynamic>;
   }
 }
 
 final bookingsRepositoryProvider = Provider((ref) => BookingsRepository(ref));
 
-final myBookingsProvider = FutureProvider<List<Booking>>((ref) => ref.read(bookingsRepositoryProvider).myBookings());
+final myBookingsProvider = FutureProvider<List<Booking>>(
+    (ref) => ref.read(bookingsRepositoryProvider).myBookings());
+
+final bookingReceiptProvider = FutureProvider.family<Booking, String>(
+    (ref, bookingId) =>
+        ref.read(bookingsRepositoryProvider).getReceipt(bookingId));

@@ -9,9 +9,19 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/shared_widgets.dart';
 import '../auth/auth_screen.dart';
 import '../facility_detail/facility_detail_screen.dart';
+import '../notifications/notifications_screen.dart';
 import '../search/search_screen.dart';
 
-const _specialisations = ['General Physician', 'Pediatrics', 'Gynaecology', 'Orthopedics', 'Dermatology', 'Cardiology', 'ENT', 'Dentist'];
+const _specialisations = [
+  'General Physician',
+  'Pediatrics',
+  'Gynaecology',
+  'Orthopedics',
+  'Dermatology',
+  'Cardiology',
+  'ENT',
+  'Dentist'
+];
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -25,7 +35,11 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('EazyDoctor'),
         actions: [
-          IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+          ),
         ],
       ),
       body: RefreshIndicator(
@@ -50,7 +64,10 @@ class HomeScreen extends ConsumerWidget {
             _SpecialisationChips(),
             const SectionHeader(title: 'Offers & updates'),
             _BannersCarousel(),
-            SectionHeader(title: location.valueOrNull?.isGps == true ? 'Near you' : 'In ${location.valueOrNull?.city ?? "your city"}'),
+            SectionHeader(
+                title: location.valueOrNull?.isGps == true
+                    ? 'Near you'
+                    : 'In ${location.valueOrNull?.city ?? "your city"}'),
             _NearYouList(location: location),
             const SizedBox(height: 24),
           ],
@@ -73,16 +90,20 @@ class _LocationBar extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Icon(Icons.location_on_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+            Icon(Icons.location_on_rounded,
+                size: 18, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 6),
             Expanded(
               child: location.when(
-                data: (loc) => Text(loc.city, style: Theme.of(context).textTheme.titleMedium, overflow: TextOverflow.ellipsis),
+                data: (loc) => Text(loc.city,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis),
                 loading: () => const Text('Detecting location…'),
                 error: (_, __) => const Text('Set your location'),
               ),
             ),
-            Icon(Icons.expand_more_rounded, size: 18, color: context.tokens.text3),
+            Icon(Icons.expand_more_rounded,
+                size: 18, color: context.tokens.text3),
           ],
         ),
       ),
@@ -95,14 +116,20 @@ class _LocationBar extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 20, right: 20, top: 20),
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('Choose your city', style: Theme.of(ctx).textTheme.titleLarge),
             const SizedBox(height: 12),
-            TextField(controller: ctrl, decoration: const InputDecoration(hintText: 'City name')),
+            TextField(
+                controller: ctrl,
+                decoration: const InputDecoration(hintText: 'City name')),
             const SizedBox(height: 12),
             Row(children: [
               Expanded(
@@ -120,7 +147,9 @@ class _LocationBar extends ConsumerWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     if (ctrl.text.trim().isNotEmpty) {
-                      ref.read(locationProvider.notifier).setManualCity(ctrl.text.trim());
+                      ref
+                          .read(locationProvider.notifier)
+                          .setManualCity(ctrl.text.trim());
                     }
                     Navigator.pop(ctx);
                   },
@@ -142,7 +171,8 @@ class _HeroSearchCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(kRadius),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SearchScreen())),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const SearchScreen())),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Row(
@@ -151,14 +181,19 @@ class _HeroSearchCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Good day 👋', style: Theme.of(context).textTheme.titleMedium),
+                    Text('Good day 👋',
+                        style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
-                    Text('Find doctors, pharmacies & nursing homes near you', style: Theme.of(context).textTheme.bodyMedium),
+                    Text('Find doctors, pharmacies & nursing homes near you',
+                        style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              CircleAvatar(radius: 22, backgroundColor: Theme.of(context).colorScheme.primary, child: const Icon(Icons.search, color: Colors.white)),
+              CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: const Icon(Icons.search, color: Colors.white)),
             ],
           ),
         ),
@@ -180,14 +215,17 @@ class _SignedOutCta extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Log in to book appointments', style: Theme.of(context).textTheme.titleMedium),
+                  Text('Log in to book appointments',
+                      style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
-                  Text('Track tokens, earn rewards and save your favourites.', style: Theme.of(context).textTheme.bodySmall),
+                  Text('Track tokens, earn rewards and save your favourites.',
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AuthScreen())),
+              onPressed: () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => const AuthScreen())),
               child: const Text('Log in'),
             ),
           ],
@@ -213,14 +251,18 @@ class _CategoryRow extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(kRadius),
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SearchScreen(initialType: c.$1))),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => SearchScreen(initialType: c.$1))),
                     child: Card(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Column(children: [
-                          Icon(c.$2, color: Theme.of(context).colorScheme.primary),
+                          Icon(c.$2,
+                              color: Theme.of(context).colorScheme.primary),
                           const SizedBox(height: 8),
-                          Text(c.$3, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+                          Text(c.$3,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall),
                         ]),
                       ),
                     ),
@@ -241,7 +283,8 @@ class _SpecialisationChips extends StatelessWidget {
       children: _specialisations
           .map((s) => ActionChip(
                 label: Text(s),
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SearchScreen(initialQuery: s))),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => SearchScreen(initialQuery: s))),
               ))
           .toList(),
     );
@@ -268,7 +311,10 @@ class _BannersCarousel extends ConsumerWidget {
                 child: SizedBox(
                   width: 260,
                   child: b.imageUrl != null
-                      ? Image.network(b.imageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _bannerFallback(context, b.title))
+                      ? Image.network(b.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              _bannerFallback(context, b.title))
                       : _bannerFallback(context, b.title),
                 ),
               );
@@ -296,12 +342,25 @@ class _NearYouList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = location.valueOrNull;
-    if (loc == null) return const LoadingView();
-    final params = FacilitySearchParams(latitude: loc.latitude, longitude: loc.longitude, city: loc.latitude == null ? loc.city : null, radiusKm: 10);
+    if (loc == null) {
+      if (location.hasError) {
+        return ErrorRetryView(
+          message: 'Could not detect location',
+          onRetry: () => ref.read(locationProvider.notifier).redetect(),
+        );
+      }
+      return const LoadingView();
+    }
+    final params = FacilitySearchParams(
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        city: loc.latitude == null ? loc.city : null,
+        radiusKm: 10);
     final facilities = ref.watch(facilitySearchProvider(params));
     return facilities.when(
       data: (list) {
-        if (list.isEmpty) return const EmptyView(message: 'No facilities found nearby yet.');
+        if (list.isEmpty)
+          return const EmptyView(message: 'No facilities found nearby yet.');
         return Column(
           children: list
               .take(8)
@@ -309,14 +368,18 @@ class _NearYouList extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: FacilityCard(
                       facility: f,
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FacilityDetailScreen(facilityId: f.id))),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) =>
+                              FacilityDetailScreen(facilityId: f.id))),
                     ),
                   ))
               .toList(),
         );
       },
       loading: () => const LoadingView(),
-      error: (e, _) => ErrorRetryView(message: 'Could not load nearby facilities', onRetry: () => ref.invalidate(facilitySearchProvider(params))),
+      error: (e, _) => ErrorRetryView(
+          message: 'Could not load nearby facilities',
+          onRetry: () => ref.invalidate(facilitySearchProvider(params))),
     );
   }
 }

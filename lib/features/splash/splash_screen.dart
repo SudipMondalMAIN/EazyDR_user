@@ -13,13 +13,31 @@ class SplashScreen extends ConsumerStatefulWidget {
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with SingleTickerProviderStateMixin {
   bool _navigated = false;
+  late final AnimationController _animController;
+  late final Animation<double> _scaleAnim;
+  late final Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
+    _animController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900));
+    _scaleAnim = Tween<double>(begin: 0.7, end: 1.0).animate(
+        CurvedAnimation(parent: _animController, curve: Curves.easeOutBack));
+    _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+        parent: _animController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeIn)));
+    _animController.forward();
     Future.microtask(_bootstrap);
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
   }
 
   Future<void> _bootstrap() async {
@@ -28,11 +46,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     if (configAsync.forceUpdate) {
       final installedOk = await _versionSatisfies(configAsync.minAppVersion);
-      if (!installedOk) return; // blocking dialog is rendered by build(); stay on splash
+      if (!installedOk)
+        return; // blocking dialog is rendered by build(); stay on splash
     }
 
-    // Give the auth notifier a moment to resolve an existing session.
-    await Future.delayed(const Duration(milliseconds: 300));
+    // Give the auth notifier a moment to resolve an existing session, and
+    // let the logo animation finish playing before navigating away.
+    await Future.delayed(const Duration(milliseconds: 900));
     if (!mounted || _navigated) return;
     _navigated = true;
     context.go(Routes.home);
@@ -70,11 +90,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.local_hospital_rounded, size: 56, color: Theme.of(context).colorScheme.primary),
+                AnimatedBuilder(
+                  animation: _animController,
+                  builder: (context, child) => Opacity(
+                    opacity: _fadeAnim.value,
+                    child:
+                        Transform.scale(scale: _scaleAnim.value, child: child),
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 120,
+                    height: 120,
+                    errorBuilder: (_, __, ___) => Icon(
+                        Icons.local_hospital_rounded,
+                        size: 56,
+                        color: Theme.of(context).colorScheme.primary),
+                  ),
+                ),
                 const SizedBox(height: 16),
-                Text('EazyDoctor', style: Theme.of(context).textTheme.headlineMedium),
+                FadeTransition(
+                  opacity: _fadeAnim,
+                  child: Text('EazyDoctor',
+                      style: Theme.of(context).textTheme.headlineMedium),
+                ),
                 const SizedBox(height: 24),
-                const CircularProgressIndicator(),
+                FadeTransition(
+                    opacity: _fadeAnim,
+                    child: const CircularProgressIndicator()),
               ],
             ),
           ),
@@ -84,7 +126,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               return FutureBuilder<bool>(
                 future: _versionSatisfies(config.minAppVersion),
                 builder: (context, snap) {
-                  if (snap.connectionState != ConnectionState.done || snap.data == true) {
+                  if (snap.connectionState != ConnectionState.done ||
+                      snap.data == true) {
                     return const SizedBox.shrink();
                   }
                   return _ForceUpdateOverlay(message: config.updateMessage);
@@ -115,12 +158,16 @@ class _ForceUpdateOverlay extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.system_update_rounded, size: 48, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.system_update_rounded,
+                    size: 48, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(height: 16),
-                Text('Update required', style: Theme.of(context).textTheme.titleLarge),
+                Text('Update required',
+                    style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Text(
-                  message.isNotEmpty ? message : 'Please update the app to continue using EazyDoctor.',
+                  message.isNotEmpty
+                      ? message
+                      : 'Please update the app to continue using EazyDoctor.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),

@@ -20,7 +20,8 @@ class LocalStorage {
   }
 
   // ---- Auth tokens ----
-  Future<void> saveTokens({required String access, required String refresh}) async {
+  Future<void> saveTokens(
+      {required String access, required String refresh}) async {
     await _prefs.setString(_kAccessToken, access);
     await _prefs.setString(_kRefreshToken, refresh);
   }
@@ -45,15 +46,16 @@ class LocalStorage {
 
   // ---- Last manually-picked city (location fallback) ----
   String? get lastCity => _prefs.getString(_kLastCity);
-  Future<void> setLastCity(String city) async => _prefs.setString(_kLastCity, city);
+  Future<void> setLastCity(String city) async =>
+      _prefs.setString(_kLastCity, city);
 
-  // ---- Backend base URL (Settings screen override) ----
-  String get baseUrl => _prefs.getString(_kBaseUrl) ?? kDefaultBaseUrl;
-  Future<void> setBaseUrl(String url) async => _prefs.setString(_kBaseUrl, url);
+  // ---- Backend base URL — hardcoded, not user-editable ----
+  String get baseUrl => kDefaultBaseUrl;
 
   // ---- Cached app-config JSON (used before first network fetch completes) ----
   String? get cachedAppConfig => _prefs.getString(_kAppConfigCache);
-  Future<void> setCachedAppConfig(String json) async => _prefs.setString(_kAppConfigCache, json);
+  Future<void> setCachedAppConfig(String json) async =>
+      _prefs.setString(_kAppConfigCache, json);
 
   Future<void> clearAll() async {
     await _prefs.remove(_kAccessToken);
