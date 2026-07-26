@@ -9,7 +9,8 @@ class AppLocation {
   final double? longitude;
   final bool isGps;
 
-  AppLocation({required this.city, this.latitude, this.longitude, required this.isGps});
+  AppLocation(
+      {required this.city, this.latitude, this.longitude, required this.isGps});
 }
 
 class LocationNotifier extends AsyncNotifier<AppLocation> {
@@ -32,20 +33,28 @@ class LocationNotifier extends AsyncNotifier<AppLocation> {
         return _fallback(storage.lastCity);
       }
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 12)),
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 12),
       );
       String cityName = 'Current location';
       try {
-        final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+        final placemarks = await placemarkFromCoordinates(
+            position.latitude, position.longitude);
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
-          cityName = (p.locality?.isNotEmpty == true ? p.locality! : p.subAdministrativeArea ?? p.administrativeArea ?? cityName);
+          cityName = (p.locality?.isNotEmpty == true
+              ? p.locality!
+              : p.subAdministrativeArea ?? p.administrativeArea ?? cityName);
         }
       } catch (_) {
         // reverse geocoding failed — keep coordinates, use a generic label
       }
       await storage.setLastCity(cityName);
-      return AppLocation(city: cityName, latitude: position.latitude, longitude: position.longitude, isGps: true);
+      return AppLocation(
+          city: cityName,
+          latitude: position.latitude,
+          longitude: position.longitude,
+          isGps: true);
     } catch (_) {
       return _fallback(storage.lastCity);
     }
@@ -67,4 +76,5 @@ class LocationNotifier extends AsyncNotifier<AppLocation> {
   }
 }
 
-final locationProvider = AsyncNotifierProvider<LocationNotifier, AppLocation>(LocationNotifier.new);
+final locationProvider =
+    AsyncNotifierProvider<LocationNotifier, AppLocation>(LocationNotifier.new);
