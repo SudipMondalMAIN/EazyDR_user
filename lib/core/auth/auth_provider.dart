@@ -71,26 +71,29 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> loginWithPassword(
-      {required String phone, required String password}) async {
+      {required String identifier, required String password}) async {
     final api = ref.read(apiClientProvider);
     final res = await api.post('/api/v1/auth/login',
-        data: {'phone': phone, 'password': password});
+        data: {'identifier': identifier, 'password': password});
     await _saveTokensAndLoadUser(res.data);
   }
 
-  /// Step 1 of email-OTP login: verify phone+password, an OTP is emailed.
+  /// Step 1 of email-OTP login: identifier (email or phone) only —
+  /// password is optional and omitted for the pure passwordless flow.
   Future<void> requestLoginOtp(
-      {required String phone, required String password}) async {
+      {required String identifier, String? password}) async {
     final api = ref.read(apiClientProvider);
-    await api.post('/api/v1/auth/login-otp/request',
-        data: {'phone': phone, 'password': password});
+    await api.post('/api/v1/auth/login-otp/request', data: {
+      'identifier': identifier,
+      if (password != null && password.isNotEmpty) 'password': password,
+    });
   }
 
   Future<void> verifyLoginOtp(
-      {required String email, required String otp}) async {
+      {required String identifier, required String otp}) async {
     final api = ref.read(apiClientProvider);
     final res = await api.post('/api/v1/auth/login-otp/verify',
-        data: {'email': email, 'otp': otp});
+        data: {'identifier': identifier, 'otp': otp});
     await _saveTokensAndLoadUser(res.data);
   }
 

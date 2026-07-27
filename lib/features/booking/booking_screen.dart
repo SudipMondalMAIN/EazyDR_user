@@ -14,7 +14,8 @@ import 'booking_result_screen.dart';
 class BookingScreen extends ConsumerStatefulWidget {
   final Doctor doctor;
   final Facility facility;
-  const BookingScreen({super.key, required this.doctor, required this.facility});
+  const BookingScreen(
+      {super.key, required this.doctor, required this.facility});
 
   @override
   ConsumerState<BookingScreen> createState() => _BookingScreenState();
@@ -47,7 +48,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   }
 
   Future<void> _confirm() async {
-    if (_nameCtrl.text.trim().isEmpty || _phoneCtrl.text.trim().isEmpty || _addressCtrl.text.trim().isEmpty) {
+    if (_nameCtrl.text.trim().isEmpty ||
+        _phoneCtrl.text.trim().isEmpty ||
+        _addressCtrl.text.trim().isEmpty) {
       setState(() => _error = 'Please fill in all patient details');
       return;
     }
@@ -66,7 +69,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           );
       ref.invalidate(myBookingsProvider);
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => BookingResultScreen(booking: booking, facility: widget.facility, doctor: widget.doctor)));
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => BookingResultScreen(
+              booking: booking,
+              facility: widget.facility,
+              doctor: widget.doctor)));
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -84,25 +91,63 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           children: [
             Card(
               child: ListTile(
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: widget.facility.photoUrl != null
+                      ? Image.network(
+                          widget.facility.photoUrl!,
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 48,
+                            height: 48,
+                            color: Theme.of(context).colorScheme.surfaceVariant,
+                            child: const Icon(Icons.local_hospital_outlined),
+                          ),
+                        )
+                      : Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceVariant,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.local_hospital_outlined),
+                        ),
+                ),
                 title: Text(widget.doctor.fullName),
-                subtitle: Text('${widget.doctor.specialty} · ${widget.facility.name}'),
-                trailing: Text('₹${widget.facility.bookingFee.toStringAsFixed(0)} fee'),
+                subtitle: Text(
+                    '${widget.doctor.specialty} · ${widget.facility.name}'),
+                trailing: Text(
+                    '₹${widget.facility.bookingFee.toStringAsFixed(0)} fee'),
               ),
             ),
             const SizedBox(height: 16),
-            TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Patient name')),
+            TextField(
+                controller: _nameCtrl,
+                decoration: const InputDecoration(labelText: 'Patient name')),
             const SizedBox(height: 12),
-            TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Patient phone')),
+            TextField(
+                controller: _phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(labelText: 'Patient phone')),
             const SizedBox(height: 12),
-            TextField(controller: _addressCtrl, maxLines: 2, decoration: const InputDecoration(labelText: 'Patient address')),
+            TextField(
+                controller: _addressCtrl,
+                maxLines: 2,
+                decoration:
+                    const InputDecoration(labelText: 'Patient address')),
             const SizedBox(height: 16),
             ListTile(
               tileColor: Theme.of(context).cardColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               leading: const Icon(Icons.event_rounded),
               title: const Text('Appointment date'),
               subtitle: Text(DateFormat('EEEE, d MMM yyyy').format(_date)),
-              trailing: TextButton(onPressed: _pickDate, child: const Text('Change')),
+              trailing:
+                  TextButton(onPressed: _pickDate, child: const Text('Change')),
             ),
             const SizedBox(height: 4),
             const Text(
@@ -118,20 +163,26 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                     const Icon(Icons.payments_outlined),
                     const SizedBox(width: 10),
                     const Expanded(child: Text('Pay in cash at the facility')),
-                    Text('₹${widget.facility.bookingFee.toStringAsFixed(0)}', style: Theme.of(context).textTheme.titleMedium),
+                    Text('₹${widget.facility.bookingFee.toStringAsFixed(0)}',
+                        style: Theme.of(context).textTheme.titleMedium),
                   ],
                 ),
               ),
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Text(_error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
             ],
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _loading ? null : _confirm,
               child: _loading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
                   : const Text('Confirm booking (Cash)'),
             ),
           ],

@@ -12,17 +12,17 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneCtrl = TextEditingController();
+  final _identifierCtrl = TextEditingController();
   String? _error;
 
   void _continue() {
-    final phone = _phoneCtrl.text.trim();
-    if (phone.length < 10) {
-      setState(() => _error = 'Enter a valid 10-digit mobile number');
+    final identifier = _identifierCtrl.text.trim();
+    if (identifier.length < 3) {
+      setState(() => _error = 'Enter a valid phone number or email');
       return;
     }
-    Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => LoginVerifyScreen(phone: phone)));
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => LoginVerifyScreen(identifier: identifier)));
   }
 
   @override
@@ -61,34 +61,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: theme.textTheme.titleLarge,
                         textAlign: TextAlign.center),
                     const SizedBox(height: 4),
-                    Text('Enter your mobile number to continue',
+                    Text('Enter your phone number or email to continue',
                         style: theme.textTheme.bodyMedium,
                         textAlign: TextAlign.center),
                     const SizedBox(height: 24),
-                    Text('Mobile Number', style: theme.textTheme.bodySmall),
+                    Text('Phone or Email', style: theme.textTheme.bodySmall),
                     const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: theme.inputDecorationTheme.fillColor,
-                            borderRadius: BorderRadius.circular(kRadiusSm),
-                          ),
-                          child: const Text('🇮🇳 +91'),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            controller: _phoneCtrl,
-                            keyboardType: TextInputType.phone,
-                            maxLength: 10,
-                            decoration: const InputDecoration(
-                                hintText: '98765 43210', counterText: ''),
-                          ),
-                        ),
-                      ],
+                    TextField(
+                      controller: _identifierCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                          hintText: '98765 43210 or you@example.com'),
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 8),

@@ -7,8 +7,8 @@ import 'widgets/otp_boxes.dart';
 import 'widgets/success_view.dart';
 
 class LoginVerifyScreen extends ConsumerStatefulWidget {
-  final String phone;
-  const LoginVerifyScreen({super.key, required this.phone});
+  final String identifier;
+  const LoginVerifyScreen({super.key, required this.identifier});
   @override
   ConsumerState<LoginVerifyScreen> createState() => _LoginVerifyScreenState();
 }
@@ -23,10 +23,9 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
   String? _error;
 
   Future<void> _sendOtp() async {
-    if (_passwordCtrl.text.isEmpty) {
-      setState(() => _error = 'Enter your password first to receive the OTP');
-      return;
-    }
+    // OTP login needs only the phone/email identifier — password is not
+    // required. The backend emails the OTP to the account's registered
+    // email regardless of which identifier was typed.
     setState(() {
       _loading = true;
       _error = null;
@@ -34,7 +33,7 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
     try {
       await ref
           .read(authProvider.notifier)
-          .requestLoginOtp(phone: widget.phone, password: _passwordCtrl.text);
+          .requestLoginOtp(identifier: widget.identifier);
       setState(() => _otpSent = true);
     } catch (e) {
       setState(() => _error = e.toString());
@@ -53,12 +52,9 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
       _error = null;
     });
     try {
-      // email isn't known at this point for phone-based login OTP; backend
-      // keys the OTP by phone/session, so we pass phone through as email arg
-      // is unused server-side for this flow variant.
       await ref
           .read(authProvider.notifier)
-          .verifyLoginOtp(email: widget.phone, otp: _otp);
+          .verifyLoginOtp(identifier: widget.identifier, otp: _otp);
       if (mounted) _goSuccess();
     } catch (e) {
       setState(() => _error = e.toString());
@@ -77,9 +73,8 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
       _error = null;
     });
     try {
-      await ref
-          .read(authProvider.notifier)
-          .loginWithPassword(phone: widget.phone, password: _passwordCtrl.text);
+      await ref.read(authProvider.notifier).loginWithPassword(
+          identifier: widget.identifier, password: _passwordCtrl.text);
       if (mounted) _goSuccess();
     } catch (e) {
       setState(() => _error = e.toString());
@@ -95,7 +90,12 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
         subtitle: 'Redirecting to Home…',
         onDone: () {
           try {
-            context.go(Routes.home);
+            // Clear the imperatively-pushed auth screens (Login -> Verify ->
+            // Success) sitting on top of GoRouter's navigator first — just
+            // calling context.go() changes the declarative location but
+            // leaves these imperative pages stuck on screen.
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            if (context.mounted) context.go(Routes.home);
           } catch (e) {
             debugPrint('Navigation to home failed: $e');
             if (context.mounted) {
@@ -125,12 +125,12 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
               const SizedBox(height: 8),
               Text(
                 _otpSent
-                    ? "We've sent a 6-digit OTP to"
-                    : 'Enter your password, or switch to OTP',
+                    ? "We've sent a 6-digit OTP to your registered email"
+                    : 'Choose OTP or Password to continue',
                 style: theme.textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
-              Text('+91 ${widget.phone}',
+              Text(widget.identifier,
                   style: theme.textTheme.titleMedium,
                   textAlign: TextAlign.center),
               const SizedBox(height: 20),
@@ -151,7 +151,7 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
                           OtpBoxes(onChanged: (v) => _otp = v)
                         else
                           Text(
-                              'Requesting an OTP needs your password once — enter it in the Password tab, then come back here.',
+                              'Tap "Send OTP" below to get a 6-digit code on your registered email.',
                               style: theme.textTheme.bodySmall,
                               textAlign: TextAlign.center),
                       ],

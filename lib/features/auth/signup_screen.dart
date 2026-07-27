@@ -114,7 +114,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         buttonLabel: 'Go to Home',
         onDone: () {
           try {
-            context.go(Routes.home);
+            // Clear the imperatively-pushed Signup screen (and any auth
+            // pages beneath it) before switching GoRouter's location —
+            // otherwise it stays stuck on top of the Home page.
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            if (context.mounted) context.go(Routes.home);
           } catch (e) {
             debugPrint('Navigation to home failed: $e');
             if (context.mounted) {
