@@ -7,7 +7,7 @@ import '../../core/repositories/facilities_repository.dart';
 import '../../core/repositories/misc_repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/shared_widgets.dart';
-import '../auth/auth_screen.dart';
+import '../auth/login_screen.dart';
 import '../booking/booking_screen.dart';
 
 const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -15,7 +15,8 @@ const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 class DoctorDetailScreen extends ConsumerWidget {
   final Doctor doctor;
   final Facility facility;
-  const DoctorDetailScreen({super.key, required this.doctor, required this.facility});
+  const DoctorDetailScreen(
+      {super.key, required this.doctor, required this.facility});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,7 +26,8 @@ class DoctorDetailScreen extends ConsumerWidget {
     final favoritesAsync = ref.watch(myFavoritesProvider);
     final auth = ref.watch(authProvider);
 
-    final favorite = favoritesAsync.valueOrNull?.where((f) => f.targetType == FavoriteTargetType.doctor && f.targetId == doctor.id);
+    final favorite = favoritesAsync.valueOrNull?.where((f) =>
+        f.targetType == FavoriteTargetType.doctor && f.targetId == doctor.id);
     final isFav = favorite != null && favorite.isNotEmpty;
 
     return Scaffold(
@@ -38,21 +40,30 @@ class DoctorDetailScreen extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 36,
-                backgroundImage: doctor.photoUrl != null ? NetworkImage(doctor.photoUrl!) : null,
-                child: doctor.photoUrl == null ? const Icon(Icons.person, size: 32) : null,
+                backgroundImage: doctor.photoUrl != null
+                    ? NetworkImage(doctor.photoUrl!)
+                    : null,
+                child: doctor.photoUrl == null
+                    ? const Icon(Icons.person, size: 32)
+                    : null,
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(doctor.fullName, style: Theme.of(context).textTheme.headlineSmall),
-                    Text(doctor.specialty, style: Theme.of(context).textTheme.bodyMedium),
-                    Text(doctor.qualification, style: Theme.of(context).textTheme.bodySmall),
+                    Text(doctor.fullName,
+                        style: Theme.of(context).textTheme.headlineSmall),
+                    Text(doctor.specialty,
+                        style: Theme.of(context).textTheme.bodyMedium),
+                    Text(doctor.qualification,
+                        style: Theme.of(context).textTheme.bodySmall),
                     const SizedBox(height: 4),
                     ratingAsync.when(
                       data: (r) => Text(
-                        r.totalReviews == 0 ? 'No ratings yet' : '⭐ ${r.averageRating?.toStringAsFixed(1)} (${r.totalReviews})',
+                        r.totalReviews == 0
+                            ? 'No ratings yet'
+                            : '⭐ ${r.averageRating?.toStringAsFixed(1)} (${r.totalReviews})',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       loading: () => const SizedBox.shrink(),
@@ -62,7 +73,8 @@ class DoctorDetailScreen extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? context.tokens.dangerColor : null),
+                icon: Icon(isFav ? Icons.favorite : Icons.favorite_border,
+                    color: isFav ? context.tokens.dangerColor : null),
                 onPressed: () async {
                   final repo = ref.read(favoritesRepositoryProvider);
                   if (isFav) {
@@ -87,14 +99,17 @@ class DoctorDetailScreen extends ConsumerWidget {
           availabilityAsync.when(
             data: (slots) {
               final active = slots.where((s) => !s.isLeave).toList();
-              if (active.isEmpty) return const EmptyView(message: 'No availability listed yet.');
+              if (active.isEmpty)
+                return const EmptyView(message: 'No availability listed yet.');
               return Column(
                 children: active
                     .map((s) => Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: const Icon(Icons.schedule_rounded),
-                            title: Text(s.dayOfWeek != null ? _dayNames[s.dayOfWeek!] : 'Every day'),
+                            title: Text(s.dayOfWeek != null
+                                ? _dayNames[s.dayOfWeek!]
+                                : 'Every day'),
                             subtitle: Text('${s.startTime} – ${s.endTime}'),
                           ),
                         ))
@@ -102,14 +117,17 @@ class DoctorDetailScreen extends ConsumerWidget {
               );
             },
             loading: () => const LoadingView(),
-            error: (_, __) => const EmptyView(message: 'Availability unavailable right now.'),
+            error: (_, __) =>
+                const EmptyView(message: 'Availability unavailable right now.'),
           ),
           const SectionHeader(title: 'Consultation fee'),
-          Text('₹${doctor.consultationFee.toStringAsFixed(0)}', style: Theme.of(context).textTheme.titleLarge),
+          Text('₹${doctor.consultationFee.toStringAsFixed(0)}',
+              style: Theme.of(context).textTheme.titleLarge),
           const SectionHeader(title: 'Patient reviews'),
           reviewsAsync.when(
             data: (reviews) {
-              if (reviews.isEmpty) return const EmptyView(message: 'No reviews yet.');
+              if (reviews.isEmpty)
+                return const EmptyView(message: 'No reviews yet.');
               return Column(
                 children: reviews
                     .take(5)
@@ -120,8 +138,20 @@ class DoctorDetailScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(children: List.generate(5, (i) => Icon(i < r.rating ? Icons.star_rounded : Icons.star_border_rounded, size: 16, color: context.tokens.accentColor))),
-                                if (r.comment != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text(r.comment!)),
+                                Row(
+                                    children: List.generate(
+                                        5,
+                                        (i) => Icon(
+                                            i < r.rating
+                                                ? Icons.star_rounded
+                                                : Icons.star_border_rounded,
+                                            size: 16,
+                                            color:
+                                                context.tokens.accentColor))),
+                                if (r.comment != null)
+                                  Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(r.comment!)),
                               ],
                             ),
                           ),
@@ -141,10 +171,13 @@ class DoctorDetailScreen extends ConsumerWidget {
           child: ElevatedButton(
             onPressed: () {
               if (auth.status != SessionStatus.loggedIn) {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AuthScreen()));
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()));
                 return;
               }
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => BookingScreen(doctor: doctor, facility: facility)));
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) =>
+                      BookingScreen(doctor: doctor, facility: facility)));
             },
             child: const Text('Book appointment'),
           ),

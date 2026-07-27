@@ -10,7 +10,7 @@ import '../../core/repositories/misc_repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/widgets/shared_widgets.dart';
-import '../auth/auth_screen.dart';
+import '../auth/login_screen.dart';
 import '../bookings_list/bookings_list_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../notifications/notifications_screen.dart';
@@ -40,7 +40,7 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AuthScreen())),
+                      MaterialPageRoute(builder: (_) => const LoginScreen())),
                   child: const Text('Log in'),
                 ),
               ],

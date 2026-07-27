@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
-        android:label="eazydr_user"
+        android:label="EazyDoctor"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <!-- Default channel/icon FCM falls back to when a push payload

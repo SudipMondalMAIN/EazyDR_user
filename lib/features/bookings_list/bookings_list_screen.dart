@@ -7,7 +7,7 @@ import '../../core/models/booking.dart';
 import '../../core/repositories/bookings_repository.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/shared_widgets.dart';
-import '../auth/auth_screen.dart';
+import '../auth/login_screen.dart';
 import '../booking_detail/booking_detail_screen.dart';
 import '../queue_status/queue_status_screen.dart';
 
@@ -55,7 +55,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AuthScreen())),
+                      MaterialPageRoute(builder: (_) => const LoginScreen())),
                   child: const Text('Log in'),
                 ),
               ],

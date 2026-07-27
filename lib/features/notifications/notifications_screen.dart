@@ -6,7 +6,8 @@ import '../../core/models/misc_models.dart';
 import '../../core/repositories/misc_repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/shared_widgets.dart';
-import '../auth/auth_screen.dart';
+import '../auth/login_screen.dart';
+import '../booking_detail/booking_detail_screen.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -44,12 +45,15 @@ class NotificationsScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.notifications_none_rounded, size: 40, color: context.tokens.text3),
+                Icon(Icons.notifications_none_rounded,
+                    size: 40, color: context.tokens.text3),
                 const SizedBox(height: 12),
-                Text('Log in to see your notifications', style: Theme.of(context).textTheme.titleMedium),
+                Text('Log in to see your notifications',
+                    style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AuthScreen())),
+                  onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LoginScreen())),
                   child: const Text('Log in'),
                 ),
               ],
@@ -81,13 +85,17 @@ class NotificationsScreen extends ConsumerWidget {
       ),
       body: notificationsAsync.when(
         loading: () => const LoadingView(),
-        error: (e, _) => ErrorRetryView(message: 'Could not load notifications', onRetry: () => ref.invalidate(myNotificationsProvider)),
+        error: (e, _) => ErrorRetryView(
+            message: 'Could not load notifications',
+            onRetry: () => ref.invalidate(myNotificationsProvider)),
         data: (items) {
           if (items.isEmpty) {
             return RefreshIndicator(
               onRefresh: () async => ref.invalidate(myNotificationsProvider),
               child: ListView(children: const [
-                EmptyView(message: 'No notifications yet.', icon: Icons.notifications_none_rounded),
+                EmptyView(
+                    message: 'No notifications yet.',
+                    icon: Icons.notifications_none_rounded),
               ]),
             );
           }
@@ -103,12 +111,24 @@ class NotificationsScreen extends ConsumerWidget {
                 onTap: () async {
                   if (!items[i].isRead) {
                     try {
-                      await ref.read(notificationsRepositoryProvider).markRead(items[i].id);
+                      await ref
+                          .read(notificationsRepositoryProvider)
+                          .markRead(items[i].id);
                       ref.invalidate(myNotificationsProvider);
                       ref.invalidate(unreadCountProvider);
                     } catch (_) {
                       // best-effort
                     }
+                  }
+                  final bookingId = items[i].relatedBookingId;
+                  if (bookingId != null &&
+                      bookingId.isNotEmpty &&
+                      context.mounted) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              BookingDetailScreen(bookingId: bookingId)),
+                    );
                   }
                 },
               ),
@@ -124,7 +144,8 @@ class _NotificationCard extends StatelessWidget {
   final AppNotification notification;
   final IconData icon;
   final VoidCallback onTap;
-  const _NotificationCard({required this.notification, required this.icon, required this.onTap});
+  const _NotificationCard(
+      {required this.notification, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +177,9 @@ class _NotificationCard extends StatelessWidget {
                           child: Text(
                             notification.title,
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w800,
+                              fontWeight: notification.isRead
+                                  ? FontWeight.w600
+                                  : FontWeight.w800,
                             ),
                           ),
                         ),
@@ -165,7 +188,9 @@ class _NotificationCard extends StatelessWidget {
                             width: 8,
                             height: 8,
                             margin: const EdgeInsets.only(left: 8, top: 4),
-                            decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+                            decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle),
                           ),
                       ],
                     ),

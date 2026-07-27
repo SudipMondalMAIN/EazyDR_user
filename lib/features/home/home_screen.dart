@@ -7,7 +7,7 @@ import '../../core/repositories/facilities_repository.dart';
 import '../../core/repositories/misc_repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/shared_widgets.dart';
-import '../auth/auth_screen.dart';
+import '../auth/login_screen.dart';
 import '../facility_detail/facility_detail_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../search/search_screen.dart';
@@ -352,7 +352,7 @@ class _SignedOutCta extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => const AuthScreen())),
+                  .push(MaterialPageRoute(builder: (_) => const LoginScreen())),
               child: const Text('Log in'),
             ),
           ],

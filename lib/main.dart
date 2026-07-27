@@ -9,7 +9,7 @@ import 'core/push/push_service.dart';
 import 'core/routing/route_names.dart';
 import 'core/storage/local_storage.dart';
 import 'core/theme/theme_provider.dart';
-import 'features/auth/auth_screen.dart';
+import 'features/auth/login_screen.dart';
 import 'features/auth/forgot_password_screen.dart';
 import 'features/shell/main_shell.dart';
 import 'features/splash/splash_screen.dart';
@@ -43,10 +43,16 @@ final _routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: Routes.splash,
     routes: [
-      GoRoute(path: Routes.splash, builder: (context, state) => const SplashScreen()),
-      GoRoute(path: Routes.auth, builder: (context, state) => const AuthScreen()),
-      GoRoute(path: Routes.forgotPassword, builder: (context, state) => const ForgotPasswordScreen()),
-      GoRoute(path: Routes.home, builder: (context, state) => const MainShell()),
+      GoRoute(
+          path: Routes.splash,
+          builder: (context, state) => const SplashScreen()),
+      GoRoute(
+          path: Routes.auth, builder: (context, state) => const LoginScreen()),
+      GoRoute(
+          path: Routes.forgotPassword,
+          builder: (context, state) => const ForgotPasswordScreen()),
+      GoRoute(
+          path: Routes.home, builder: (context, state) => const MainShell()),
     ],
   );
 });
