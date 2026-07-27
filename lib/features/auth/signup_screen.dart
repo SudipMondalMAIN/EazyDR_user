@@ -111,7 +111,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         subtitle:
             'Welcome to EazyDoctor. Your account has been created successfully.',
         buttonLabel: 'Go to Home',
-        onDone: () => context.go(Routes.home),
+        onDone: () {
+          try {
+            context.go(Routes.home);
+          } catch (e) {
+            debugPrint('Navigation to home failed: $e');
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Could not open Home: $e')));
+            }
+          }
+        },
       );
     }
     return Scaffold(

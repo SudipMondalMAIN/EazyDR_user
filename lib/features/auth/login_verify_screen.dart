@@ -93,7 +93,17 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
       builder: (_) => SuccessView(
         title: 'Login Successful!',
         subtitle: 'Redirecting to Home…',
-        onDone: () => context.go(Routes.home),
+        onDone: () {
+          try {
+            context.go(Routes.home);
+          } catch (e) {
+            debugPrint('Navigation to home failed: $e');
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Could not open Home: $e')));
+            }
+          }
+        },
       ),
     ));
   }
