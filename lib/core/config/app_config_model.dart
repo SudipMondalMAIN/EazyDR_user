@@ -44,6 +44,7 @@ class AppConfig {
   final String minAppVersion;
   final bool forceUpdate;
   final String updateMessage;
+  final String updateUrl;
 
   AppConfig({
     required this.navConfig,
@@ -53,6 +54,7 @@ class AppConfig {
     required this.minAppVersion,
     required this.forceUpdate,
     required this.updateMessage,
+    required this.updateUrl,
   });
 
   List<NavItem> get visibleSortedNav {
@@ -71,6 +73,7 @@ class AppConfig {
         minAppVersion: json['min_app_version'] ?? '1.0.0',
         forceUpdate: json['force_update'] ?? false,
         updateMessage: json['update_message'] ?? '',
+        updateUrl: json['update_url'] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -81,6 +84,7 @@ class AppConfig {
         'min_app_version': minAppVersion,
         'force_update': forceUpdate,
         'update_message': updateMessage,
+        'update_url': updateUrl,
       };
 
   static AppConfig fallback() => AppConfig(
@@ -97,6 +101,7 @@ class AppConfig {
         minAppVersion: '1.0.0',
         forceUpdate: false,
         updateMessage: '',
+        updateUrl: '',
       );
 
   static AppConfig fromCache(String jsonStr) => AppConfig.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);

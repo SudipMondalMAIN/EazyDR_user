@@ -1,4 +1,4 @@
-name: eazydr_user
+name: EazyDoctor
 description: EazyDoctor patient app — book doctors, pharmacies and nursing homes.
 publish_to: 'none'
 version: 1.0.0+1
@@ -21,6 +21,9 @@ dependencies:
   google_fonts: ^6.2.1
   intl: ^0.19.0
   cupertino_icons: ^1.0.8
+  url_launcher: ^6.3.0
+  pdf: ^3.11.1
+  printing: ^5.13.1
 
 dev_dependencies:
   flutter_test:

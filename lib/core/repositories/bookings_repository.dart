@@ -42,6 +42,12 @@ class BookingsRepository {
     return Booking.fromJson(res.data as Map<String, dynamic>);
   }
 
+  Future<QueueStatus> getQueueStatus(String bookingId) async {
+    final api = ref.read(apiClientProvider);
+    final res = await api.get('/api/v1/bookings/$bookingId/queue-status');
+    return QueueStatus.fromJson(res.data as Map<String, dynamic>);
+  }
+
   Future<Map<String, dynamic>> cancel(String bookingId,
       {String? reason}) async {
     final api = ref.read(apiClientProvider);

@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/shared_widgets.dart';
 import '../auth/auth_screen.dart';
 import '../booking_detail/booking_detail_screen.dart';
+import '../queue_status/queue_status_screen.dart';
 
 class BookingsListScreen extends ConsumerStatefulWidget {
   const BookingsListScreen({super.key});
@@ -213,6 +214,20 @@ class _BookingCard extends ConsumerWidget {
                   style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.primary)),
+              if (isUpcoming(booking.status)) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => QueueStatusScreen(booking: booking)),
+                    ),
+                    icon: const Icon(Icons.sensors_rounded, size: 18),
+                    label: const Text('Live Status'),
+                  ),
+                ),
+              ],
               if (isUpcoming(booking.status) &&
                   booking.status != BookingStatus.inProgress) ...[
                 const SizedBox(height: 12),

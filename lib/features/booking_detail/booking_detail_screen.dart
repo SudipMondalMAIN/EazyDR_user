@@ -9,9 +9,11 @@ import '../../core/models/booking.dart';
 import '../../core/models/facility.dart';
 import '../../core/repositories/bookings_repository.dart';
 import '../../core/repositories/facilities_repository.dart';
+import '../../core/services/receipt_pdf_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/shared_widgets.dart';
 import '../facility_detail/facility_detail_screen.dart';
+import '../queue_status/queue_status_screen.dart';
 
 /// Full-page booking details — QR to check in, doctor/facility/appointment
 /// info, payment summary, and cancel/receipt actions. Reached by tapping a
@@ -209,15 +211,27 @@ class _BookingDetailBody extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 20),
+        if (isUpcoming(booking.status)) ...[
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.sensors_rounded),
+              label: const Text('Live Status'),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => QueueStatusScreen(booking: booking)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         Row(
           children: [
             Expanded(
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.download_rounded),
                 label: const Text('Receipt (PDF)'),
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('PDF receipt download is coming soon'))),
+                onPressed: () => _downloadReceipt(context, ref),
               ),
             ),
             if (isUpcoming(booking.status) &&
@@ -246,6 +260,27 @@ class _BookingDetailBody extends ConsumerWidget {
         const SizedBox(height: 24),
       ],
     );
+  }
+
+  Future<void> _downloadReceipt(BuildContext context, WidgetRef ref) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      final fullBooking =
+          await ref.read(bookingsRepositoryProvider).getReceipt(booking.id);
+      await ReceiptPdfService.shareReceipt(fullBooking);
+      if (context.mounted) Navigator.pop(context); // close loading dialog
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not generate receipt: $e')),
+        );
+      }
+    }
   }
 
   void _confirmCancel(BuildContext context, WidgetRef ref) {

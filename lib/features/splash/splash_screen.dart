@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/config/app_config_provider.dart';
 import '../../core/core_providers.dart';
@@ -130,7 +131,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       snap.data == true) {
                     return const SizedBox.shrink();
                   }
-                  return _ForceUpdateOverlay(message: config.updateMessage);
+                  return _ForceUpdateOverlay(message: config.updateMessage, updateUrl: config.updateUrl);
                 },
               );
             },
@@ -144,7 +145,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
 class _ForceUpdateOverlay extends StatelessWidget {
   final String message;
-  const _ForceUpdateOverlay({required this.message});
+  final String updateUrl;
+  const _ForceUpdateOverlay({required this.message, required this.updateUrl});
+
+  Future<void> _openStore(BuildContext context) async {
+    if (updateUrl.isEmpty) return;
+    final uri = Uri.tryParse(updateUrl);
+    if (uri == null) return;
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the update link.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +185,17 @@ class _ForceUpdateOverlay extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
+                if (updateUrl.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => _openStore(context),
+                      icon: const Icon(Icons.system_update_alt_rounded),
+                      label: const Text('Update Now'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

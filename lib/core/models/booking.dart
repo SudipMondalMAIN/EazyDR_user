@@ -57,6 +57,9 @@ class Booking {
   final String qrUuid;
   final DateTime createdAt;
   final String? qrCodeBase64;
+  final String doctorName;
+  final String facilityName;
+  final String facilityAddress;
 
   Booking({
     required this.id,
@@ -72,6 +75,9 @@ class Booking {
     required this.qrUuid,
     required this.createdAt,
     this.qrCodeBase64,
+    this.doctorName = '',
+    this.facilityName = '',
+    this.facilityAddress = '',
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) => Booking(
@@ -88,5 +94,47 @@ class Booking {
         qrUuid: json['qr_uuid'].toString(),
         createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
         qrCodeBase64: json['qr_code_base64'],
+        doctorName: json['doctor_name'] ?? '',
+        facilityName: json['facility_name'] ?? '',
+        facilityAddress: json['facility_address'] ?? '',
+      );
+}
+
+class QueueStatus {
+  final String bookingId;
+  final String doctorName;
+  final String facilityName;
+  final String appointmentDate;
+  final int yourToken;
+  final BookingStatus status;
+  final int? currentToken;
+  final int patientsAhead;
+  final int? estimatedWaitMinutes;
+  final DateTime updatedAt;
+
+  QueueStatus({
+    required this.bookingId,
+    required this.doctorName,
+    required this.facilityName,
+    required this.appointmentDate,
+    required this.yourToken,
+    required this.status,
+    required this.currentToken,
+    required this.patientsAhead,
+    required this.estimatedWaitMinutes,
+    required this.updatedAt,
+  });
+
+  factory QueueStatus.fromJson(Map<String, dynamic> json) => QueueStatus(
+        bookingId: json['booking_id'].toString(),
+        doctorName: json['doctor_name'] ?? '',
+        facilityName: json['facility_name'] ?? '',
+        appointmentDate: json['appointment_date'] ?? '',
+        yourToken: json['your_token'] ?? 0,
+        status: bookingStatusFromApi(json['status']),
+        currentToken: json['current_token'],
+        patientsAhead: json['patients_ahead'] ?? 0,
+        estimatedWaitMinutes: json['estimated_wait_minutes'],
+        updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
       );
 }
