@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/brand_logo.dart';
 import 'forgot_password_screen.dart';
 import 'login_verify_screen.dart';
 import 'signup_screen.dart';
@@ -29,83 +31,77 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 12),
-              Center(
+              const Center(
+                child: BrandHeader(
+                    logoSize: 88, tagline: 'Your health, our priority'),
+              ),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(kRadiusLg),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.local_hospital_rounded,
-                        size: 56, color: theme.colorScheme.primary),
-                    const SizedBox(height: 8),
-                    Text('EazyDoctor',
-                        style: theme.textTheme.headlineMedium
-                            ?.copyWith(color: theme.colorScheme.primary)),
-                    Text('Your health, our priority',
-                        style: theme.textTheme.bodySmall),
+                    Text('Welcome back',
+                        style: theme.textTheme.titleLarge,
+                        textAlign: TextAlign.center),
+                    const SizedBox(height: 4),
+                    Text('Enter your mobile number to continue',
+                        style: theme.textTheme.bodyMedium,
+                        textAlign: TextAlign.center),
+                    const SizedBox(height: 24),
+                    Text('Mobile Number', style: theme.textTheme.bodySmall),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: theme.inputDecorationTheme.fillColor,
+                            borderRadius: BorderRadius.circular(kRadiusSm),
+                          ),
+                          child: const Text('🇮🇳 +91'),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: _phoneCtrl,
+                            keyboardType: TextInputType.phone,
+                            maxLength: 10,
+                            decoration: const InputDecoration(
+                                hintText: '98765 43210', counterText: ''),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 8),
+                      Text(_error!,
+                          style: TextStyle(color: theme.colorScheme.error)),
+                    ],
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                        onPressed: _continue, child: const Text('Continue')),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-              Text('Welcome to EazyDoctor',
-                  style: theme.textTheme.titleLarge,
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 4),
-              Text('Enter your mobile number to continue',
-                  style: theme.textTheme.bodyMedium,
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 24),
-              Text('Mobile Number', style: theme.textTheme.bodySmall),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: theme.inputDecorationTheme.fillColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text('🇮🇳 +91'),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _phoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      maxLength: 10,
-                      decoration: const InputDecoration(
-                          hintText: '98765 43210', counterText: ''),
-                    ),
-                  ),
-                ],
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
-              ],
               const SizedBox(height: 20),
-              ElevatedButton(
-                  onPressed: _continue, child: const Text('Continue')),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Expanded(child: Divider()),
-                  Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('or', style: theme.textTheme.bodySmall)),
-                  const Expanded(child: Divider()),
-                ],
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.g_mobiledata, size: 26),
-                label: const Text('Continue with Google'),
-              ),
-              const SizedBox(height: 16),
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.of(context).push(

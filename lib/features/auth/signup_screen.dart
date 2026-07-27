@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/routing/route_names.dart';
+import '../../core/widgets/brand_logo.dart';
 import 'widgets/otp_boxes.dart';
 import 'widgets/success_view.dart';
 
@@ -138,6 +139,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Center(child: BrandMark(size: 56)),
+              const SizedBox(height: 16),
               _Stepper(step: _step, total: 4),
               const SizedBox(height: 20),
               Text(_titles[_step],

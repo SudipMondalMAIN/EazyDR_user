@@ -2,13 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/models/booking.dart';
 import '../../core/models/facility.dart';
-import '../../core/routing/route_names.dart';
 import '../../core/theme/app_theme.dart';
+import '../bookings_list/bookings_list_screen.dart';
 
 /// Shown right after a booking is created. Confirms the token number,
 /// expected time, and cash amount due — and shows the QR ticket the
@@ -148,12 +147,22 @@ class BookingResultScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go(Routes.bookings),
+              onPressed: () {
+                // This screen was pushed imperatively (Navigator.push) on
+                // top of MainShell, not via go_router, so use the same
+                // Navigator to get back to the shell, then open the
+                // bookings list on top of it.
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const BookingsListScreen()),
+                );
+              },
               child: const Text('View my bookings'),
             ),
             const SizedBox(height: 10),
             OutlinedButton(
-              onPressed: () => context.go(Routes.home),
+              onPressed: () =>
+                  Navigator.of(context).popUntil((route) => route.isFirst),
               child: const Text('Back to home'),
             ),
           ],
