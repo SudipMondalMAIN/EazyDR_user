@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/widgets/shared_widgets.dart';
 import '../auth/login_screen.dart';
+import 'edit_profile_screen.dart';
 import '../bookings_list/bookings_list_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../notifications/notifications_screen.dart';
@@ -99,79 +100,87 @@ class ProfileScreen extends ConsumerWidget {
               ),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 32,
-                            backgroundColor: Colors.white.withOpacity(0.25),
-                            backgroundImage: user?.photoUrl != null
-                                ? NetworkImage(user!.photoUrl!)
-                                : null,
-                            child: user?.photoUrl == null
-                                ? const Icon(Icons.person,
-                                    size: 32, color: Colors.white)
-                                : null,
-                          ),
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                  color: Colors.white, shape: BoxShape.circle),
-                              child: Icon(Icons.edit, size: 12, color: primary),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  InkWell(
+                    borderRadius: BorderRadius.circular(kRadiusLg),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const EditProfileScreen())),
+                    child: Row(
+                      children: [
+                        Stack(
                           children: [
-                            Text(user?.fullName ?? '',
-                                style: theme.textTheme.titleLarge?.copyWith(
+                            CircleAvatar(
+                              radius: 32,
+                              backgroundColor: Colors.white.withOpacity(0.25),
+                              backgroundImage: user?.photoUrl != null
+                                  ? NetworkImage(user!.photoUrl!)
+                                  : null,
+                              child: user?.photoUrl == null
+                                  ? const Icon(Icons.person,
+                                      size: 32, color: Colors.white)
+                                  : null,
+                            ),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 2),
-                            Text(user?.phone ?? '',
-                                style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9))),
-                            if ((user?.email ?? '').isNotEmpty)
-                              Text(user!.email!,
-                                  style: TextStyle(
-                                      color: Colors.white.withOpacity(0.9),
-                                      fontSize: 12)),
-                            const SizedBox(height: 8),
-                            if (user?.isPhoneVerified == true ||
-                                user?.isEmailVerified == true)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.verified_rounded,
-                                        size: 14, color: Colors.white),
-                                    SizedBox(width: 4),
-                                    Text('Verified',
-                                        style: TextStyle(
-                                            color: Colors.white, fontSize: 12)),
-                                  ],
-                                ),
+                                    shape: BoxShape.circle),
+                                child:
+                                    Icon(Icons.edit, size: 12, color: primary),
                               ),
+                            ),
                           ],
                         ),
-                      ),
-                      const Icon(Icons.chevron_right_rounded,
-                          color: Colors.white70),
-                    ],
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(user?.fullName ?? '',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 2),
+                              Text(user?.phone ?? '',
+                                  style: TextStyle(
+                                      color: Colors.white.withOpacity(0.9))),
+                              if ((user?.email ?? '').isNotEmpty)
+                                Text(user!.email!,
+                                    style: TextStyle(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 12)),
+                              const SizedBox(height: 8),
+                              if (user?.isPhoneVerified == true ||
+                                  user?.isEmailVerified == true)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.verified_rounded,
+                                          size: 14, color: Colors.white),
+                                      SizedBox(width: 4),
+                                      Text('Verified',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12)),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded,
+                            color: Colors.white70),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Divider(color: Colors.white.withOpacity(0.2), height: 1),

@@ -29,7 +29,8 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final api = ref.read(apiClientProvider);
       final res = await api.get('/api/v1/auth/me');
-      state = AuthState(status: SessionStatus.loggedIn, user: AppUser.fromJson(res.data));
+      state = AuthState(
+          status: SessionStatus.loggedIn, user: AppUser.fromJson(res.data));
     } catch (_) {
       await logout();
     }
@@ -54,32 +55,42 @@ class AuthNotifier extends Notifier<AuthState> {
     });
   }
 
-  Future<void> resendOtp({required String email, required String purpose}) async {
+  Future<void> resendOtp(
+      {required String email, required String purpose}) async {
     final api = ref.read(apiClientProvider);
-    await api.post('/api/v1/auth/otp/request', data: {'email': email, 'purpose': purpose});
+    await api.post('/api/v1/auth/otp/request',
+        data: {'email': email, 'purpose': purpose});
   }
 
-  Future<void> verifySignupOtp({required String email, required String otp}) async {
+  Future<void> verifySignupOtp(
+      {required String email, required String otp}) async {
     final api = ref.read(apiClientProvider);
-    final res = await api.post('/api/v1/auth/otp/verify-signup', data: {'email': email, 'otp': otp});
+    final res = await api.post('/api/v1/auth/otp/verify-signup',
+        data: {'email': email, 'otp': otp});
     await _saveTokensAndLoadUser(res.data);
   }
 
-  Future<void> loginWithPassword({required String phone, required String password}) async {
+  Future<void> loginWithPassword(
+      {required String phone, required String password}) async {
     final api = ref.read(apiClientProvider);
-    final res = await api.post('/api/v1/auth/login', data: {'phone': phone, 'password': password});
+    final res = await api.post('/api/v1/auth/login',
+        data: {'phone': phone, 'password': password});
     await _saveTokensAndLoadUser(res.data);
   }
 
   /// Step 1 of email-OTP login: verify phone+password, an OTP is emailed.
-  Future<void> requestLoginOtp({required String phone, required String password}) async {
+  Future<void> requestLoginOtp(
+      {required String phone, required String password}) async {
     final api = ref.read(apiClientProvider);
-    await api.post('/api/v1/auth/login-otp/request', data: {'phone': phone, 'password': password});
+    await api.post('/api/v1/auth/login-otp/request',
+        data: {'phone': phone, 'password': password});
   }
 
-  Future<void> verifyLoginOtp({required String email, required String otp}) async {
+  Future<void> verifyLoginOtp(
+      {required String email, required String otp}) async {
     final api = ref.read(apiClientProvider);
-    final res = await api.post('/api/v1/auth/login-otp/verify', data: {'email': email, 'otp': otp});
+    final res = await api.post('/api/v1/auth/login-otp/verify',
+        data: {'email': email, 'otp': otp});
     await _saveTokensAndLoadUser(res.data);
   }
 
@@ -88,14 +99,19 @@ class AuthNotifier extends Notifier<AuthState> {
     await api.post('/api/v1/auth/forgot-password', data: {'email': email});
   }
 
-  Future<void> resetPassword({required String email, required String otp, required String newPassword}) async {
+  Future<void> resetPassword(
+      {required String email,
+      required String otp,
+      required String newPassword}) async {
     final api = ref.read(apiClientProvider);
-    await api.post('/api/v1/auth/reset-password', data: {'email': email, 'otp': otp, 'new_password': newPassword});
+    await api.post('/api/v1/auth/reset-password',
+        data: {'email': email, 'otp': otp, 'new_password': newPassword});
   }
 
   Future<void> _saveTokensAndLoadUser(Map<String, dynamic> tokenJson) async {
     final storage = ref.read(localStorageProvider);
-    await storage.saveTokens(access: tokenJson['access_token'], refresh: tokenJson['refresh_token']);
+    await storage.saveTokens(
+        access: tokenJson['access_token'], refresh: tokenJson['refresh_token']);
     await fetchCurrentUser();
     await _registerPendingPushTokenIfAny();
   }
@@ -114,13 +130,30 @@ class AuthNotifier extends Notifier<AuthState> {
     if (token == null || state.status != SessionStatus.loggedIn) return;
     try {
       final api = ref.read(apiClientProvider);
-      await api.patch('/api/v1/auth/me/push-token', data: {'device_push_token': token});
+      await api.patch('/api/v1/auth/me/push-token',
+          data: {'device_push_token': token});
     } catch (_) {
       // best-effort — a missed push-token registration isn't fatal
     }
   }
 
   Future<void> refreshCurrentUser() => fetchCurrentUser();
+
+  /// Full profile edit (name/phone/email) via PATCH /api/v1/auth/me.
+  Future<void> updateProfile({
+    String? fullName,
+    String? phone,
+    String? email,
+  }) async {
+    final api = ref.read(apiClientProvider);
+    final res = await api.patch('/api/v1/auth/me', data: {
+      if (fullName != null) 'full_name': fullName,
+      if (phone != null) 'phone': phone,
+      if (email != null) 'email': email,
+    });
+    state = AuthState(
+        status: SessionStatus.loggedIn, user: AppUser.fromJson(res.data));
+  }
 
   Future<void> logout() async {
     final storage = ref.read(localStorageProvider);
@@ -129,4 +162,5 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 }
 
-final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+final authProvider =
+    NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
