@@ -7,6 +7,7 @@ import '../favorites/favorites_screen.dart';
 import '../home/home_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../profile/profile_screen.dart';
+import '../queue_status/queue_status_screen.dart';
 import '../search/search_screen.dart';
 import '../wallet/wallet_screen.dart';
 
@@ -30,6 +31,9 @@ IconData _iconFor(String name) {
     case 'user':
     case 'profile':
       return Icons.person_rounded;
+    case 'live':
+    case 'sensors':
+      return Icons.sensors_rounded;
     default:
       return Icons.circle_outlined;
   }
@@ -51,6 +55,8 @@ Widget _screenFor(String screen) {
       return const NotificationsScreen();
     case 'profile':
       return const ProfileScreen();
+    case 'live':
+      return const QueueStatusScreen();
     default:
       return const HomeScreen();
   }

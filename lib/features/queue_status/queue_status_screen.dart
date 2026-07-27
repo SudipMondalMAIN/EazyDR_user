@@ -8,13 +8,15 @@ import '../../core/models/booking.dart';
 import '../../core/repositories/bookings_repository.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Full-page live status view for one booking — shows which token is
-/// currently being seen, how many patients are ahead, and a rough wait
-/// estimate. Polls the backend every 15s while the screen is open so it
-/// stays current without the user having to pull-to-refresh.
+/// Live status — used two ways:
+///  - with a `booking` passed in (from booking detail / bookings list): shows
+///    that one booking's live queue status, polling every 15s.
+///  - with no `booking` (used directly as a bottom-nav tab): lists all of
+///    the user's currently-active bookings; tapping one pushes this same
+///    screen again, this time with that booking set.
 class QueueStatusScreen extends ConsumerStatefulWidget {
-  final Booking booking;
-  const QueueStatusScreen({super.key, required this.booking});
+  final Booking? booking;
+  const QueueStatusScreen({super.key, this.booking});
 
   @override
   ConsumerState<QueueStatusScreen> createState() => _QueueStatusScreenState();
@@ -31,8 +33,10 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
   @override
   void initState() {
     super.initState();
-    _fetch();
-    _timer = Timer.periodic(_pollInterval, (_) => _fetch(silent: true));
+    if (widget.booking != null) {
+      _fetch();
+      _timer = Timer.periodic(_pollInterval, (_) => _fetch(silent: true));
+    }
   }
 
   @override
@@ -42,9 +46,12 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
   }
 
   Future<void> _fetch({bool silent = false}) async {
+    if (widget.booking == null) return;
     if (!silent) setState(() => _loading = true);
     try {
-      final status = await ref.read(bookingsRepositoryProvider).getQueueStatus(widget.booking.id);
+      final status = await ref
+          .read(bookingsRepositoryProvider)
+          .getQueueStatus(widget.booking!.id);
       if (!mounted) return;
       setState(() {
         _status = status;
@@ -68,6 +75,8 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.booking == null) return _buildListMode(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Live Status'),
@@ -85,6 +94,57 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
     );
   }
 
+  Widget _buildListMode(BuildContext context) {
+    final bookingsAsync = ref.watch(myBookingsProvider);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Live Status')),
+      body: bookingsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Could not load bookings: $e')),
+        data: (bookings) {
+          final active = bookings.where((b) => isUpcoming(b.status)).toList();
+          if (active.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sensors_off_rounded,
+                        size: 40, color: context.tokens.text3),
+                    const SizedBox(height: 12),
+                    const Text('No active bookings right now'),
+                  ],
+                ),
+              ),
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: active.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, i) {
+              final b = active[i];
+              return Card(
+                child: ListTile(
+                  leading: const Icon(Icons.sensors_rounded),
+                  title: Text('Token #${b.tokenNumber}'),
+                  subtitle: Text(
+                      '${bookingStatusLabel(b.status)} · ${b.appointmentDate}'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (_) => QueueStatusScreen(booking: b)),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildBody(BuildContext context) {
     if (_loading && _status == null) {
       return const Center(child: CircularProgressIndicator());
@@ -95,10 +155,13 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
           const SizedBox(height: 120),
           Icon(Icons.wifi_off_rounded, size: 40, color: context.tokens.text3),
           const SizedBox(height: 12),
-          Center(child: Text('Could not load live status', style: Theme.of(context).textTheme.titleMedium)),
+          Center(
+              child: Text('Could not load live status',
+                  style: Theme.of(context).textTheme.titleMedium)),
           const SizedBox(height: 8),
           Center(
-            child: TextButton(onPressed: () => _fetch(), child: const Text('Retry')),
+            child: TextButton(
+                onPressed: () => _fetch(), child: const Text('Retry')),
           ),
         ],
       );
@@ -111,24 +174,32 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Text(status.doctorName.isNotEmpty ? status.doctorName : 'Doctor', style: theme.textTheme.titleLarge),
+        Text(status.doctorName.isNotEmpty ? status.doctorName : 'Doctor',
+            style: theme.textTheme.titleLarge),
         const SizedBox(height: 2),
-        Text(status.facilityName, style: theme.textTheme.bodyMedium?.copyWith(color: tokens.text3)),
+        Text(status.facilityName,
+            style: theme.textTheme.bodyMedium?.copyWith(color: tokens.text3)),
         const SizedBox(height: 24),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                Text('Now serving', style: theme.textTheme.labelLarge?.copyWith(color: tokens.text3)),
+                Text('Now serving',
+                    style: theme.textTheme.labelLarge
+                        ?.copyWith(color: tokens.text3)),
                 const SizedBox(height: 8),
                 Text(
                   status.currentToken != null ? '#${status.currentToken}' : '—',
-                  style: theme.textTheme.displayMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                  style: theme.textTheme.displayMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary),
                 ),
                 if (status.currentToken == null) ...[
                   const SizedBox(height: 4),
-                  Text('Not started yet', style: theme.textTheme.bodySmall?.copyWith(color: tokens.text3)),
+                  Text('Not started yet',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: tokens.text3)),
                 ],
               ],
             ),
@@ -138,11 +209,13 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
         Row(
           children: [
             Expanded(
-              child: _statCard(context, label: 'Your token', value: '#${status.yourToken}'),
+              child: _statCard(context,
+                  label: 'Your token', value: '#${status.yourToken}'),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _statCard(context, label: 'Patients ahead', value: '${status.patientsAhead}'),
+              child: _statCard(context,
+                  label: 'Patients ahead', value: '${status.patientsAhead}'),
             ),
           ],
         ),
@@ -152,19 +225,26 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
           label: 'Estimated wait',
           value: _isFinished
               ? '—'
-              : (status.estimatedWaitMinutes != null ? '~${status.estimatedWaitMinutes} min' : 'Not available'),
+              : (status.estimatedWaitMinutes != null
+                  ? '~${status.estimatedWaitMinutes} min'
+                  : 'Not available'),
           fullWidth: true,
         ),
         const SizedBox(height: 20),
         if (_isFinished)
           Container(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: tokens.primarySoft, borderRadius: BorderRadius.circular(kRadiusSm)),
+            decoration: BoxDecoration(
+                color: tokens.primarySoft,
+                borderRadius: BorderRadius.circular(kRadiusSm)),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, color: theme.colorScheme.primary, size: 20),
+                Icon(Icons.info_outline_rounded,
+                    color: theme.colorScheme.primary, size: 20),
                 const SizedBox(width: 10),
-                Expanded(child: Text('This booking is ${bookingStatusLabel(status.status).toLowerCase()} — live tracking has ended.')),
+                Expanded(
+                    child: Text(
+                        'This booking is ${bookingStatusLabel(status.status).toLowerCase()} — live tracking has ended.')),
               ],
             ),
           ),
@@ -179,17 +259,23 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
     );
   }
 
-  Widget _statCard(BuildContext context, {required String label, required String value, bool fullWidth = false}) {
+  Widget _statCard(BuildContext context,
+      {required String label, required String value, bool fullWidth = false}) {
     final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         child: Column(
-          crossAxisAlignment: fullWidth ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+          crossAxisAlignment:
+              fullWidth ? CrossAxisAlignment.start : CrossAxisAlignment.center,
           children: [
-            Text(label, style: theme.textTheme.labelMedium?.copyWith(color: context.tokens.text3)),
+            Text(label,
+                style: theme.textTheme.labelMedium
+                    ?.copyWith(color: context.tokens.text3)),
             const SizedBox(height: 6),
-            Text(value, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+            Text(value,
+                style: theme.textTheme.headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w700)),
           ],
         ),
       ),
