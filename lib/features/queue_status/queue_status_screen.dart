@@ -79,7 +79,7 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Live Status'),
+        title: const Text('Live Queue'),
         actions: [
           IconButton(
             onPressed: _loading ? null : () => _fetch(),
@@ -97,7 +97,7 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
   Widget _buildListMode(BuildContext context) {
     final bookingsAsync = ref.watch(myBookingsProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Live Status')),
+      appBar: AppBar(title: const Text('Live Queue')),
       body: bookingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Could not load bookings: $e')),
@@ -128,14 +128,14 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
               return Card(
                 child: ListTile(
                   leading: const Icon(Icons.sensors_rounded),
-                  title: Text('Token #${b.tokenNumber}'),
+                  title: Text(b.facilityName.isNotEmpty
+                      ? b.facilityName
+                      : 'Token #${b.tokenNumber}'),
                   subtitle: Text(
                       '${bookingStatusLabel(b.status)} · ${b.appointmentDate}'),
                   trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (_) => QueueStatusScreen(booking: b)),
-                  ),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => QueueStatusScreen(booking: b))),
                 ),
               );
             },
@@ -160,9 +160,8 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
                   style: Theme.of(context).textTheme.titleMedium)),
           const SizedBox(height: 8),
           Center(
-            child: TextButton(
-                onPressed: () => _fetch(), child: const Text('Retry')),
-          ),
+              child: TextButton(
+                  onPressed: () => _fetch(), child: const Text('Retry'))),
         ],
       );
     }
@@ -170,67 +169,231 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
     final status = _status!;
     final theme = Theme.of(context);
     final tokens = context.tokens;
+    final primary = theme.colorScheme.primary;
+
+    // Best-effort queue-summary numbers derived from the fields the API
+    // actually gives us (no separate "completed/total" endpoint yet).
+    final remaining = status.patientsAhead;
+    final completedSoFar =
+        status.currentToken != null && status.currentToken! > 0
+            ? status.currentToken! - 1
+            : 0;
+    final totalInQueue = status.yourToken > completedSoFar + remaining
+        ? status.yourToken
+        : completedSoFar + remaining + 1;
+    final nextToken = (status.currentToken ?? 0) + 1;
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       children: [
-        Text(status.doctorName.isNotEmpty ? status.doctorName : 'Doctor',
-            style: theme.textTheme.titleLarge),
-        const SizedBox(height: 2),
-        Text(status.facilityName,
-            style: theme.textTheme.bodyMedium?.copyWith(color: tokens.text3)),
-        const SizedBox(height: 24),
+        // Top teal card: facility, doctor, token + ETA
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [primary, primary.withOpacity(0.8)],
+            ),
+            borderRadius: BorderRadius.circular(kRadiusLg),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    child: const Icon(Icons.local_hospital_rounded,
+                        color: Colors.white),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                            status.facilityName.isNotEmpty
+                                ? status.facilityName
+                                : 'Facility',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700)),
+                        Text(
+                            status.doctorName.isNotEmpty
+                                ? 'Dr. ${status.doctorName}'
+                                : 'Doctor',
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(0.9))),
+                      ],
+                    ),
+                  ),
+                  if (!_isFinished)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(999)),
+                      child: Text('Live',
+                          style: TextStyle(
+                              color: primary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Divider(color: Colors.white.withOpacity(0.25), height: 1),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Your Token',
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 12)),
+                        const SizedBox(height: 4),
+                        Text('#${status.yourToken}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800)),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Estimated Wait',
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 12)),
+                        const SizedBox(height: 4),
+                        Text(
+                          _isFinished
+                              ? '—'
+                              : (status.estimatedWaitMinutes != null
+                                  ? '${status.estimatedWaitMinutes} mins'
+                                  : '—'),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Current status
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Now serving',
-                    style: theme.textTheme.labelLarge
-                        ?.copyWith(color: tokens.text3)),
-                const SizedBox(height: 8),
+                Text('Current Status', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 4),
                 Text(
-                  status.currentToken != null ? '#${status.currentToken}' : '—',
-                  style: theme.textTheme.displayMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary),
+                  status.currentToken != null
+                      ? 'Token #${status.currentToken} is in consultation'
+                      : (_isFinished
+                          ? 'This booking is ${bookingStatusLabel(status.status).toLowerCase()}'
+                          : 'Not started yet'),
+                  style: theme.textTheme.bodySmall,
                 ),
-                if (status.currentToken == null) ...[
-                  const SizedBox(height: 4),
-                  Text('Not started yet',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: tokens.text3)),
-                ],
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.person_rounded, size: 20, color: tokens.text3),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 4,
+                          activeTrackColor: primary,
+                          inactiveTrackColor: tokens.surface2,
+                          thumbColor: Colors.white,
+                          thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 9),
+                          overlayShape: SliderComponentShape.noOverlay,
+                        ),
+                        child: Slider(
+                          value: totalInQueue > 0
+                              ? (completedSoFar / totalInQueue).clamp(0.0, 1.0)
+                              : 0.0,
+                          onChanged: null,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.groups_rounded, size: 20, color: tokens.text3),
+                  ],
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text('Next token: #$nextToken',
+                      style: theme.textTheme.bodySmall),
+                ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _statCard(context,
-                  label: 'Your token', value: '#${status.yourToken}'),
+        // Queue summary
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Queue Summary', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    _summaryStat(context,
+                        label: 'Total in Queue', value: '$totalInQueue'),
+                    _summaryStat(context,
+                        label: 'Completed',
+                        value: '$completedSoFar',
+                        color: tokens.successColor),
+                    _summaryStat(context,
+                        label: 'Remaining',
+                        value: '$remaining',
+                        color: primary),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _statCard(context,
-                  label: 'Patients ahead', value: '${status.patientsAhead}'),
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (!_isFinished)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+                color: tokens.primarySoft,
+                borderRadius: BorderRadius.circular(kRadiusSm)),
+            child: Row(
+              children: [
+                Icon(Icons.notifications_active_rounded,
+                    color: primary, size: 20),
+                const SizedBox(width: 10),
+                const Expanded(
+                    child:
+                        Text('You will be notified 30 mins before your turn.')),
+              ],
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _statCard(
-          context,
-          label: 'Estimated wait',
-          value: _isFinished
-              ? '—'
-              : (status.estimatedWaitMinutes != null
-                  ? '~${status.estimatedWaitMinutes} min'
-                  : 'Not available'),
-          fullWidth: true,
-        ),
-        const SizedBox(height: 20),
+          ),
         if (_isFinished)
           Container(
             padding: const EdgeInsets.all(14),
@@ -239,8 +402,7 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
                 borderRadius: BorderRadius.circular(kRadiusSm)),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded,
-                    color: theme.colorScheme.primary, size: 20),
+                Icon(Icons.info_outline_rounded, color: primary, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                     child: Text(
@@ -248,6 +410,45 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
               ],
             ),
           ),
+        const SizedBox(height: 16),
+        // Need help card
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      color: tokens.primarySoft, shape: BoxShape.circle),
+                  child: Icon(Icons.headset_mic_rounded, color: primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Need Help?', style: theme.textTheme.titleSmall),
+                      const SizedBox(height: 2),
+                      Text(
+                          'If you need any assistance, our support team is here to help you.',
+                          style: theme.textTheme.bodySmall),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.call_rounded, size: 18),
+                          label: const Text('Call Support'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         const SizedBox(height: 16),
         Center(
           child: Text(
@@ -259,25 +460,20 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
     );
   }
 
-  Widget _statCard(BuildContext context,
-      {required String label, required String value, bool fullWidth = false}) {
+  Widget _summaryStat(BuildContext context,
+      {required String label, required String value, Color? color}) {
     final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        child: Column(
-          crossAxisAlignment:
-              fullWidth ? CrossAxisAlignment.start : CrossAxisAlignment.center,
-          children: [
-            Text(label,
-                style: theme.textTheme.labelMedium
-                    ?.copyWith(color: context.tokens.text3)),
-            const SizedBox(height: 6),
-            Text(value,
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
-          ],
-        ),
+    return Expanded(
+      child: Column(
+        children: [
+          Text(value,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: color ?? theme.colorScheme.onSurface)),
+          const SizedBox(height: 2),
+          Text(label,
+              textAlign: TextAlign.center, style: theme.textTheme.bodySmall),
+        ],
       ),
     );
   }
