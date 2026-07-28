@@ -84,20 +84,16 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
   }
 
   void _goSuccess() {
+    // Capture the router HERE, while `context` is still this (mounted)
+    // screen's context — not inside onDone, which fires after
+    // pushReplacement has already disposed this State, making any
+    // `context` lookup inside the callback silently fail.
+    final router = GoRouter.of(context);
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (_) => SuccessView(
         title: 'Login Successful!',
         subtitle: 'Redirecting to Home…',
         onDone: () {
-          // Capture the router BEFORE popping — popUntil disposes this
-          // SuccessView's own context, which made `context.mounted` false
-          // and silently skipped the go(Routes.home) call below.
-          final router = GoRouter.of(context);
-          try {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          } catch (e) {
-            debugPrint('Navigation to home failed: $e');
-          }
           router.go(Routes.home);
         },
       ),
