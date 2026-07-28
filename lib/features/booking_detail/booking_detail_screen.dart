@@ -199,11 +199,11 @@ class _BookingDetailBody extends ConsumerWidget {
         const SectionHeader(title: 'Booking ID'),
         Card(
           child: ListTile(
-            title: Text(booking.id, style: theme.textTheme.bodySmall),
+            title: Text(booking.orderId, style: theme.textTheme.bodySmall),
             trailing: IconButton(
               icon: const Icon(Icons.copy_rounded, size: 18),
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: booking.id));
+                Clipboard.setData(ClipboardData(text: booking.orderId));
                 ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Booking ID copied')));
               },

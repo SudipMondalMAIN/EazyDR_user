@@ -55,7 +55,7 @@ class ReceiptPdfService {
               _row('Appointment Date', dateLabel),
               _row('Expected Time', booking.expectedTime),
               _row('Booking Fee', '\u20b9${booking.bookingFee.toStringAsFixed(0)} (${booking.paymentMode})'),
-              _row('Booking ID', booking.id),
+              _row('Booking ID', booking.orderId),
               pw.SizedBox(height: 16),
               pw.Divider(),
               pw.SizedBox(height: 12),

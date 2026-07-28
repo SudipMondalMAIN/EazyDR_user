@@ -304,10 +304,7 @@ class _FeaturedBookingCard extends ConsumerWidget {
                       children: [
                         Text('Booking ID', style: theme.textTheme.bodySmall),
                         const SizedBox(height: 2),
-                        Text(
-                            booking.id.length > 8
-                                ? booking.id.substring(0, 8).toUpperCase()
-                                : booking.id,
+                        Text(booking.orderId,
                             style: theme.textTheme.titleMedium),
                       ],
                     ),

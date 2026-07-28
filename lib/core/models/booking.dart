@@ -56,6 +56,7 @@ bool isUpcoming(BookingStatus s) =>
 
 class Booking {
   final String id;
+  final String orderId;
   final String facilityId;
   final String doctorId;
   final String patientName;
@@ -75,6 +76,7 @@ class Booking {
 
   Booking({
     required this.id,
+    required this.orderId,
     required this.facilityId,
     required this.doctorId,
     required this.patientName,
@@ -95,6 +97,9 @@ class Booking {
 
   factory Booking.fromJson(Map<String, dynamic> json) => Booking(
         id: json['id'].toString(),
+        // Human-readable order id shown to users (e.g. EZD26072800001).
+        // UUID (`id`) is kept only for internal API calls, never shown.
+        orderId: (json['booking_code'] ?? json['id']).toString(),
         facilityId: json['facility_id'].toString(),
         doctorId: json['doctor_id'].toString(),
         patientName: json['patient_name'] ?? '',
