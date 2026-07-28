@@ -16,6 +16,7 @@ import '../bookings_list/bookings_list_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../wallet/wallet_screen.dart';
+import '../support/support_chat_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -357,9 +358,11 @@ class ProfileScreen extends ConsumerWidget {
                       onTap: () {}),
                   const Divider(height: 1),
                   _MenuTile(
-                      icon: Icons.headset_mic_outlined,
-                      label: 'Help & Support',
-                      onTap: () {}),
+                    icon: Icons.headset_mic_outlined,
+                    label: 'Help & Support',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const SupportChatScreen())),
+                  ),
                   const Divider(height: 1),
                   FutureBuilder<PackageInfo>(
                     future: ref.read(packageInfoProvider.future),
