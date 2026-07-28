@@ -1,4 +1,12 @@
-enum BookingStatus { pending, confirmed, checkedIn, inProgress, completed, cancelled, noShow }
+enum BookingStatus {
+  pending,
+  confirmed,
+  checkedIn,
+  inProgress,
+  completed,
+  cancelled,
+  noShow
+}
 
 BookingStatus bookingStatusFromApi(String v) {
   switch (v) {
@@ -41,7 +49,10 @@ String bookingStatusLabel(BookingStatus s) {
 }
 
 bool isUpcoming(BookingStatus s) =>
-    s == BookingStatus.pending || s == BookingStatus.confirmed || s == BookingStatus.checkedIn || s == BookingStatus.inProgress;
+    s == BookingStatus.pending ||
+    s == BookingStatus.confirmed ||
+    s == BookingStatus.checkedIn ||
+    s == BookingStatus.inProgress;
 
 class Booking {
   final String id;
@@ -60,6 +71,7 @@ class Booking {
   final String doctorName;
   final String facilityName;
   final String facilityAddress;
+  final String? facilityPhotoUrl;
 
   Booking({
     required this.id,
@@ -78,6 +90,7 @@ class Booking {
     this.doctorName = '',
     this.facilityName = '',
     this.facilityAddress = '',
+    this.facilityPhotoUrl,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) => Booking(
@@ -92,11 +105,13 @@ class Booking {
         paymentMode: json['payment_mode'] ?? 'cash',
         status: bookingStatusFromApi(json['status']),
         qrUuid: json['qr_uuid'].toString(),
-        createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+        createdAt:
+            DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
         qrCodeBase64: json['qr_code_base64'],
         doctorName: json['doctor_name'] ?? '',
         facilityName: json['facility_name'] ?? '',
         facilityAddress: json['facility_address'] ?? '',
+        facilityPhotoUrl: json['facility_photo_url'],
       );
 }
 
@@ -135,6 +150,7 @@ class QueueStatus {
         currentToken: json['current_token'],
         patientsAhead: json['patients_ahead'] ?? 0,
         estimatedWaitMinutes: json['estimated_wait_minutes'],
-        updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+        updatedAt:
+            DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
       );
 }

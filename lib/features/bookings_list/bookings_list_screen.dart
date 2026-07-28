@@ -245,16 +245,7 @@ class _FeaturedBookingCard extends ConsumerWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: tokens.dangerSoft,
-                      borderRadius: BorderRadius.circular(kRadiusSm),
-                    ),
-                    child: Icon(Icons.local_hospital_rounded,
-                        color: tokens.dangerColor),
-                  ),
+                  _FacilityAvatar(photoUrl: booking.facilityPhotoUrl, size: 48),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -265,9 +256,6 @@ class _FeaturedBookingCard extends ConsumerWidget {
                                 ? booking.facilityName
                                 : 'Facility',
                             style: theme.textTheme.titleMedium),
-                        const SizedBox(height: 2),
-                        Text('General Physician',
-                            style: theme.textTheme.bodySmall),
                       ],
                     ),
                   ),
@@ -430,16 +418,7 @@ class _BookingListTile extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: tokens.primarySoft,
-                  borderRadius: BorderRadius.circular(kRadiusSm),
-                ),
-                child: Icon(Icons.local_hospital_rounded,
-                    color: theme.colorScheme.primary, size: 22),
-              ),
+              _FacilityAvatar(photoUrl: booking.facilityPhotoUrl, size: 44),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -483,6 +462,56 @@ class _BookingListTile extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Facility photo shown on booking cards, with a graceful fallback to the
+/// generic hospital icon while loading, on error, or when no photo exists.
+class _FacilityAvatar extends StatelessWidget {
+  final String? photoUrl;
+  final double size;
+  const _FacilityAvatar({required this.photoUrl, required this.size});
+
+  Widget _fallback(BuildContext context, BorderRadius radius) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+            color: context.tokens.primarySoft, borderRadius: radius),
+        child: Icon(Icons.local_hospital_rounded,
+            color: Theme.of(context).colorScheme.primary, size: size * 0.5),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(kRadiusSm);
+    if (photoUrl == null || photoUrl!.isEmpty) {
+      return _fallback(context, radius);
+    }
+    return ClipRRect(
+      borderRadius: radius,
+      child: Image.network(
+        photoUrl!,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _fallback(context, radius),
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+                color: context.tokens.primarySoft, borderRadius: radius),
+            child: const Center(
+              child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          );
+        },
       ),
     );
   }
