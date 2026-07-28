@@ -10,6 +10,7 @@ class LocalStorage {
   static const _kLastCity = 'last_picked_city';
   static const _kBaseUrl = 'backend_base_url';
   static const _kAppConfigCache = 'app_config_cache';
+  static const _kSupportSessionId = 'support_session_id';
 
   final SharedPreferences _prefs;
   LocalStorage(this._prefs);
@@ -57,10 +58,19 @@ class LocalStorage {
   Future<void> setCachedAppConfig(String json) async =>
       _prefs.setString(_kAppConfigCache, json);
 
+  // ---- Support chat session (so re-opening the screen resumes the same
+  // conversation instead of starting a brand-new one each time) ----
+  String? get supportSessionId => _prefs.getString(_kSupportSessionId);
+  Future<void> setSupportSessionId(String id) async =>
+      _prefs.setString(_kSupportSessionId, id);
+  Future<void> clearSupportSessionId() async =>
+      _prefs.remove(_kSupportSessionId);
+
   Future<void> clearAll() async {
     await _prefs.remove(_kAccessToken);
     await _prefs.remove(_kRefreshToken);
     await _prefs.remove(_kAppConfigCache);
+    await _prefs.remove(_kSupportSessionId);
     // last city / theme / base url intentionally survive a "clear cache".
   }
 }

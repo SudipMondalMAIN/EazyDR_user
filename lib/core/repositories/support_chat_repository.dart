@@ -18,6 +18,12 @@ class SupportChatRepository {
     return ChatSession.fromJson(res.data as Map<String, dynamic>);
   }
 
+  Future<ChatSession> getSession(String sessionId) async {
+    final api = ref.read(apiClientProvider);
+    final res = await api.get('/api/v1/support/sessions/$sessionId');
+    return ChatSession.fromJson(res.data as Map<String, dynamic>);
+  }
+
   Future<List<ChatMessage>> getMessages(String sessionId) async {
     final api = ref.read(apiClientProvider);
     final res = await api.get('/api/v1/support/sessions/$sessionId/messages');
@@ -31,8 +37,7 @@ class SupportChatRepository {
   Future<List<ChatMessage>> sendMessageRest(
       String sessionId, String text) async {
     final api = ref.read(apiClientProvider);
-    final res = await api.post(
-        '/api/v1/support/sessions/$sessionId/messages',
+    final res = await api.post('/api/v1/support/sessions/$sessionId/messages',
         data: {'text': text});
     return (res.data as List)
         .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
@@ -42,6 +47,11 @@ class SupportChatRepository {
   Future<void> escalate(String sessionId) async {
     final api = ref.read(apiClientProvider);
     await api.post('/api/v1/support/sessions/$sessionId/escalate');
+  }
+
+  Future<void> closeSession(String sessionId) async {
+    final api = ref.read(apiClientProvider);
+    await api.post('/api/v1/support/sessions/$sessionId/close');
   }
 
   /// Opens the live chat WebSocket. Caller owns the returned channel and

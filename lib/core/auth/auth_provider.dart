@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core_providers.dart';
 import '../models/user.dart';
@@ -99,7 +100,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> forgotPassword({required String email}) async {
     final api = ref.read(apiClientProvider);
-    await api.post('/api/v1/auth/forgot-password', data: {'email': email});
+    await api.post('/api/v1/auth/forgot-password', data: {'identifier': email});
   }
 
   Future<void> resetPassword(
@@ -108,7 +109,7 @@ class AuthNotifier extends Notifier<AuthState> {
       required String newPassword}) async {
     final api = ref.read(apiClientProvider);
     await api.post('/api/v1/auth/reset-password',
-        data: {'email': email, 'otp': otp, 'new_password': newPassword});
+        data: {'identifier': email, 'otp': otp, 'new_password': newPassword});
   }
 
   Future<void> _saveTokensAndLoadUser(Map<String, dynamic> tokenJson) async {
@@ -154,6 +155,16 @@ class AuthNotifier extends Notifier<AuthState> {
       if (phone != null) 'phone': phone,
       if (email != null) 'email': email,
     });
+    state = AuthState(
+        status: SessionStatus.loggedIn, user: AppUser.fromJson(res.data));
+  }
+
+  Future<void> updateProfilePhoto(String filePath) async {
+    final api = ref.read(apiClientProvider);
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final res = await api.postForm('/api/v1/auth/me/photo', formData);
     state = AuthState(
         status: SessionStatus.loggedIn, user: AppUser.fromJson(res.data));
   }

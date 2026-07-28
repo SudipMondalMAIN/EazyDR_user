@@ -89,20 +89,16 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
         title: 'Login Successful!',
         subtitle: 'Redirecting to Home…',
         onDone: () {
+          // Capture the router BEFORE popping — popUntil disposes this
+          // SuccessView's own context, which made `context.mounted` false
+          // and silently skipped the go(Routes.home) call below.
+          final router = GoRouter.of(context);
           try {
-            // Clear the imperatively-pushed auth screens (Login -> Verify ->
-            // Success) sitting on top of GoRouter's navigator first — just
-            // calling context.go() changes the declarative location but
-            // leaves these imperative pages stuck on screen.
             Navigator.of(context).popUntil((route) => route.isFirst);
-            if (context.mounted) context.go(Routes.home);
           } catch (e) {
             debugPrint('Navigation to home failed: $e');
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Could not open Home: $e')));
-            }
           }
+          router.go(Routes.home);
         },
       ),
     ));

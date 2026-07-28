@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../core/core_providers.dart';
 import '../../core/models/chat_message.dart';
 import '../../core/repositories/support_chat_repository.dart';
 import '../../core/theme/app_theme.dart';
@@ -22,7 +23,8 @@ class SupportChatScreen extends ConsumerStatefulWidget {
   ConsumerState<SupportChatScreen> createState() => _SupportChatScreenState();
 }
 
-class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
+class _SupportChatScreenState extends ConsumerState<SupportChatScreen>
+    with WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
@@ -39,14 +41,56 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _init();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Screen was off / app was backgrounded — the OS almost certainly
+      // killed the socket. Refetch anything we missed and reconnect.
+      _resumeSession();
+    }
+  }
+
+  Future<void> _resumeSession() async {
+    if (_session == null || _status == ChatSessionStatus.closed) return;
+    final repo = ref.read(supportChatRepositoryProvider);
+    try {
+      final history = await repo.getMessages(_session!.id);
+      _addAll(history);
+    } catch (_) {
+      // Ignore — we'll still try to reconnect the socket below.
+    }
+    _wsSub?.cancel();
+    _ws?.sink.close();
+    _connectWs(_session!.id);
   }
 
   Future<void> _init() async {
     setState(() => _loading = true);
     final repo = ref.read(supportChatRepositoryProvider);
+    final storage = ref.read(localStorageProvider);
     try {
-      final session = await repo.startSession(language: _language);
+      final savedId = storage.supportSessionId;
+      ChatSession? session;
+      if (savedId != null) {
+        try {
+          session = await repo.getSession(savedId);
+        } catch (_) {
+          // Saved session gone/invalid — fall through and start a new one.
+          await storage.clearSupportSessionId();
+        }
+      }
+      if (session == null) {
+        session = await repo.startSession(language: _language);
+        await storage.setSupportSessionId(session.id);
+      } else if (session.status == ChatSessionStatus.closed) {
+        // Previous conversation was closed — start a fresh one.
+        session = await repo.startSession(language: _language);
+        await storage.setSupportSessionId(session.id);
+      }
       _session = session;
       _status = session.status;
       final history = await repo.getMessages(session.id);
@@ -54,8 +98,36 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       _connectWs(session.id);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not start chat: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not start chat: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _restartWithLanguage(String lang) async {
+    final repo = ref.read(supportChatRepositoryProvider);
+    final storage = ref.read(localStorageProvider);
+    setState(() {
+      _loading = true;
+      _messages.clear();
+      _seenIds.clear();
+    });
+    _wsSub?.cancel();
+    _ws?.sink.close();
+    try {
+      final session = await repo.startSession(language: lang);
+      await storage.setSupportSessionId(session.id);
+      _session = session;
+      _status = session.status;
+      final history = await repo.getMessages(session.id);
+      _addAll(history);
+      _connectWs(session.id);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not start chat: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -135,8 +207,43 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     }
   }
 
+  Future<void> _endChat() async {
+    if (_session == null || _status == ChatSessionStatus.closed) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('End chat?'),
+        content: const Text(
+            'This will close the current conversation. You can always start a new chat later.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('End Chat')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final repo = ref.read(supportChatRepositoryProvider);
+    final storage = ref.read(localStorageProvider);
+    try {
+      await repo.closeSession(_session!.id);
+      setState(() => _status = ChatSessionStatus.closed);
+      await storage.clearSupportSessionId();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed: $e')));
+      }
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _wsSub?.cancel();
     _ws?.sink.close();
     _controller.dispose();
@@ -164,18 +271,23 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       appBar: AppBar(
         title: const Text('Help & Support'),
         actions: [
+          if (_status != ChatSessionStatus.closed && _session != null)
+            IconButton(
+              tooltip: 'End Chat',
+              icon: const Icon(Icons.close_rounded),
+              onPressed: _endChat,
+            ),
           PopupMenuButton<String>(
             initialValue: _language,
             tooltip: 'Language',
             icon: const Icon(Icons.language_rounded),
             onSelected: (lang) {
+              if (lang == _language) return;
               setState(() => _language = lang);
-              // Language only affects the *next* new session; current
-              // session keeps its original language for consistency.
+              _restartWithLanguage(lang);
             },
             itemBuilder: (_) => _kLanguages.entries
-                .map((e) =>
-                    PopupMenuItem(value: e.key, child: Text(e.value)))
+                .map((e) => PopupMenuItem(value: e.key, child: Text(e.value)))
                 .toList(),
           ),
         ],
@@ -208,8 +320,8 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                 ),
                 if (_status == ChatSessionStatus.bot)
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
@@ -305,8 +417,8 @@ class _MessageBubble extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.only(

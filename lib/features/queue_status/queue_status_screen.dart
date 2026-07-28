@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../core/models/booking.dart';
 import '../../core/repositories/bookings_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../support/support_chat_screen.dart';
 
 /// Live status — used two ways:
 ///  - with a `booking` passed in (from booking detail / bookings list): shows
@@ -132,6 +133,7 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
                       ? b.facilityName
                       : 'Token #${b.tokenNumber}'),
                   subtitle: Text(
+                      '${b.doctorName.isNotEmpty ? 'Dr. ${b.doctorName} · ' : ''}'
                       '${bookingStatusLabel(b.status)} · ${b.appointmentDate}'),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
@@ -437,7 +439,9 @@ class _QueueStatusScreenState extends ConsumerState<QueueStatusScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const SupportChatScreen())),
                           icon: const Icon(Icons.call_rounded, size: 18),
                           label: const Text('Call Support'),
                         ),
