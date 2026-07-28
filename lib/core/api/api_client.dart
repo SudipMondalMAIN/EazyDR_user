@@ -23,7 +23,8 @@ class ApiClient {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         final token = storage.accessToken;
-        if (token != null && !options.path.contains('/auth/login') &&
+        if (token != null &&
+            !options.path.contains('/auth/login') &&
             !options.path.contains('/auth/register') &&
             !options.path.contains('/auth/otp') &&
             !options.path.contains('/auth/forgot-password') &&
@@ -35,7 +36,9 @@ class ApiClient {
       },
       onError: (error, handler) async {
         final isAuthRoute = error.requestOptions.path.contains('/auth/');
-        if (error.response?.statusCode == 401 && !isAuthRoute && storage.refreshToken != null) {
+        if (error.response?.statusCode == 401 &&
+            !isAuthRoute &&
+            storage.refreshToken != null) {
           try {
             final refreshed = await _refresh();
             if (refreshed) {
@@ -44,11 +47,24 @@ class ApiClient {
               final response = await dio.fetch(req);
               return handler.resolve(response);
             }
+          } on DioException catch (refreshError) {
+            // Only a definitive rejection from the server (the refresh
+            // token itself is invalid/expired/revoked) means the session
+            // is truly over. A network error, timeout, or server
+            // cold-start (e.g. Render free tier waking up) while calling
+            // /auth/refresh is NOT proof the session is invalid — don't
+            // wipe the tokens for that; just let this request fail and
+            // let the app retry later with the still-valid refresh token.
+            final refreshStatus = refreshError.response?.statusCode;
+            if (refreshStatus == 401 || refreshStatus == 400) {
+              await storage.clearTokens();
+              onSessionExpired?.call();
+            }
+            return handler.next(error);
           } catch (_) {
-            // fall through to session-expired handling below
+            // Unexpected non-network error — be conservative, don't log out.
+            return handler.next(error);
           }
-          await storage.clearTokens();
-          onSessionExpired?.call();
         }
         return handler.next(error);
       },
@@ -65,26 +81,34 @@ class ApiClient {
     final response = await Dio(BaseOptions(baseUrl: dio.options.baseUrl))
         .post('/api/v1/auth/refresh', data: {'refresh_token': refreshToken});
     final data = response.data as Map<String, dynamic>;
-    await storage.saveTokens(access: data['access_token'], refresh: data['refresh_token']);
+    await storage.saveTokens(
+        access: data['access_token'], refresh: data['refresh_token']);
     return true;
   }
 
-  Future<Response> get(String path, {Map<String, dynamic>? query}) => _wrap(() => dio.get(path, queryParameters: query));
+  Future<Response> get(String path, {Map<String, dynamic>? query}) =>
+      _wrap(() => dio.get(path, queryParameters: query));
 
-  Future<Response> post(String path, {dynamic data}) => _wrap(() => dio.post(path, data: data));
+  Future<Response> post(String path, {dynamic data}) =>
+      _wrap(() => dio.post(path, data: data));
 
-  Future<Response> patch(String path, {dynamic data}) => _wrap(() => dio.patch(path, data: data));
+  Future<Response> patch(String path, {dynamic data}) =>
+      _wrap(() => dio.patch(path, data: data));
 
   Future<Response> delete(String path) => _wrap(() => dio.delete(path));
 
-  Future<Response> postForm(String path, FormData data) => _wrap(() => dio.post(path, data: data));
+  Future<Response> postForm(String path, FormData data) =>
+      _wrap(() => dio.post(path, data: data));
 
   Future<Response> _wrap(Future<Response> Function() call) async {
     try {
       return await call();
     } on DioException catch (e) {
-      final detail = e.response?.data is Map ? (e.response?.data['detail']?.toString()) : null;
-      throw ApiException(detail ?? e.message ?? 'Network error', statusCode: e.response?.statusCode);
+      final detail = e.response?.data is Map
+          ? (e.response?.data['detail']?.toString())
+          : null;
+      throw ApiException(detail ?? e.message ?? 'Network error',
+          statusCode: e.response?.statusCode);
     }
   }
 }

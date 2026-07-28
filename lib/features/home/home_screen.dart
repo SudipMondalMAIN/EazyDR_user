@@ -711,7 +711,7 @@ class _NearYouList extends ConsumerWidget {
         latitude: loc.latitude,
         longitude: loc.longitude,
         city: loc.latitude == null ? loc.city : null,
-        radiusKm: 10);
+        radiusKm: 50);
     final facilities = ref.watch(facilitySearchProvider(params));
     return facilities.when(
       data: (list) {

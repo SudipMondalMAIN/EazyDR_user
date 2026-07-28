@@ -84,16 +84,29 @@ class _LoginVerifyScreenState extends ConsumerState<LoginVerifyScreen>
   }
 
   void _goSuccess() {
-    // Capture the router HERE, while `context` is still this (mounted)
-    // screen's context — not inside onDone, which fires after
-    // pushReplacement has already disposed this State, making any
+    // Capture the router AND the navigator HERE, while `context` is still
+    // this (mounted) screen's context — not inside onDone, which fires
+    // after pushReplacement has already disposed this State, making any
     // `context` lookup inside the callback silently fail.
     final router = GoRouter.of(context);
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
+    final navigator = Navigator.of(context);
+    navigator.pushReplacement(MaterialPageRoute(
       builder: (_) => SuccessView(
         title: 'Login Successful!',
         subtitle: 'Redirecting to Home…',
         onDone: () {
+          // SuccessView (and LoginVerifyScreen before it) were pushed
+          // imperatively via Navigator.push/pushReplacement — they are
+          // NOT GoRouter pages. router.go(Routes.home) only swaps the
+          // underlying declarative page (/auth -> /home); it does not
+          // remove imperative routes stacked on top of it. Without
+          // popping them first, SuccessView stays stuck on screen
+          // forever even though the route underneath has changed —
+          // which is exactly the "doesn't redirect to Home" bug. Pop
+          // every imperative route off this Navigator first, then swap.
+          while (navigator.canPop()) {
+            navigator.pop();
+          }
           router.go(Routes.home);
         },
       ),

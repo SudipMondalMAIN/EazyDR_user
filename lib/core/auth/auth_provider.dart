@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../api/api_exception.dart';
 import '../core_providers.dart';
 import '../models/user.dart';
 
@@ -32,8 +33,23 @@ class AuthNotifier extends Notifier<AuthState> {
       final res = await api.get('/api/v1/auth/me');
       state = AuthState(
           status: SessionStatus.loggedIn, user: AppUser.fromJson(res.data));
+    } on ApiException catch (e) {
+      // Only a real auth failure (invalid/expired credentials that the
+      // refresh flow couldn't fix) should log the user out. A network
+      // hiccup, server cold-start/timeout, or any other transient error
+      // must NOT wipe the stored session — otherwise the user gets logged
+      // out just because a request briefly failed, even though their
+      // tokens are still valid.
+      if (e.statusCode == 401 || e.statusCode == 403) {
+        await logout();
+      } else if (state.status == SessionStatus.unknown) {
+        state = const AuthState(status: SessionStatus.loggedIn);
+      }
     } catch (_) {
-      await logout();
+      // Non-API errors (e.g. JSON parsing) — don't destroy the session.
+      if (state.status == SessionStatus.unknown) {
+        state = const AuthState(status: SessionStatus.loggedIn);
+      }
     }
   }
 
