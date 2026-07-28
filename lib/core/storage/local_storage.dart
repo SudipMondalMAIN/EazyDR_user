@@ -8,6 +8,8 @@ class LocalStorage {
   static const _kRefreshToken = 'refresh_token';
   static const _kThemeMode = 'theme_mode_override';
   static const _kLastCity = 'last_picked_city';
+  static const _kLastLat = 'last_picked_lat';
+  static const _kLastLng = 'last_picked_lng';
   static const _kBaseUrl = 'backend_base_url';
   static const _kAppConfigCache = 'app_config_cache';
   static const _kSupportSessionId = 'support_session_id';
@@ -50,6 +52,13 @@ class LocalStorage {
   Future<void> setLastCity(String city) async =>
       _prefs.setString(_kLastCity, city);
 
+  double? get lastLat => _prefs.getDouble(_kLastLat);
+  double? get lastLng => _prefs.getDouble(_kLastLng);
+  Future<void> setLastCoords(double lat, double lng) async {
+    await _prefs.setDouble(_kLastLat, lat);
+    await _prefs.setDouble(_kLastLng, lng);
+  }
+
   // ---- Backend base URL — hardcoded, not user-editable ----
   String get baseUrl => kDefaultBaseUrl;
 
@@ -58,8 +67,7 @@ class LocalStorage {
   Future<void> setCachedAppConfig(String json) async =>
       _prefs.setString(_kAppConfigCache, json);
 
-  // ---- Support chat session (so re-opening the screen resumes the same
-  // conversation instead of starting a brand-new one each time) ----
+  // ---- Ongoing help & support chat session (resumed across app restarts) ----
   String? get supportSessionId => _prefs.getString(_kSupportSessionId);
   Future<void> setSupportSessionId(String id) async =>
       _prefs.setString(_kSupportSessionId, id);

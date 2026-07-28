@@ -50,6 +50,7 @@ class LocationNotifier extends AsyncNotifier<AppLocation> {
         // reverse geocoding failed — keep coordinates, use a generic label
       }
       await storage.setLastCity(cityName);
+      await storage.setLastCoords(position.latitude, position.longitude);
       return AppLocation(
           city: cityName,
           latitude: position.latitude,
@@ -68,6 +69,21 @@ class LocationNotifier extends AsyncNotifier<AppLocation> {
     final storage = ref.read(localStorageProvider);
     await storage.setLastCity(city);
     state = AsyncData(AppLocation(city: city, isGps: false));
+  }
+
+  /// Called after the user drops a pin on the map and confirms it —
+  /// either by dragging manually or via "use current location" inside
+  /// the picker. [city] is the reverse-geocoded label for that pin.
+  Future<void> setPickedLocation({
+    required String city,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final storage = ref.read(localStorageProvider);
+    await storage.setLastCity(city);
+    await storage.setLastCoords(latitude, longitude);
+    state = AsyncData(AppLocation(
+        city: city, latitude: latitude, longitude: longitude, isGps: false));
   }
 
   Future<void> redetect() async {

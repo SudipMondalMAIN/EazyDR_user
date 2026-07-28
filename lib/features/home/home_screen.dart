@@ -8,6 +8,7 @@ import '../../core/repositories/misc_repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/shared_widgets.dart';
 import '../auth/login_screen.dart';
+import '../location/location_picker_screen.dart';
 import '../facility_detail/facility_detail_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../search/search_screen.dart';
@@ -197,6 +198,17 @@ class _TopBar extends ConsumerWidget {
                 ),
               ),
             ]),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.map_rounded),
+              label: const Text('Choose on map'),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const LocationPickerScreen(),
+                ));
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),

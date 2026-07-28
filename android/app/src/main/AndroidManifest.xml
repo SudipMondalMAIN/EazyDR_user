@@ -9,6 +9,12 @@
          requestPermission() call in push_service.dart triggers that prompt. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <!-- Explicit in the release manifest: map tiles (flutter_map/OSM), the
+         backend API, and Firebase all need network access. The debug/profile
+         manifests already declare this for dev builds, but release builds
+         only use this file. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="EazyDoctor"
         android:name="${applicationName}"
